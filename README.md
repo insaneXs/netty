@@ -32,6 +32,7 @@ Netty 源码阅读计划
  * `io.netty.transport.udt`
 
 ## 主要阅读模块及已完成明细
+主要要阅读的模块基本上涵盖和Netty-all中的内容，其中部分模块名称略有不同，读者可以自己对应下。
 ### io.netty.buffer  
 
 ### io.netty.codec  
@@ -41,3 +42,11 @@ Netty 源码阅读计划
 ### io.netty.handler  
 
 ### io.netty.transport
+    - io.netty
+            - bootstrap 
+                - AbstractBootstap
+                - AbstractBootstrapConfig
+                - Bootstrap
+                - BootstrapConfig
+                - ServerBootstrap
+                - ServerBootstrapConfig

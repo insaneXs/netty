@@ -28,9 +28,12 @@ import java.util.Map;
 
 /**
  * Exposes the configuration of an {@link AbstractBootstrap}.
+ * AbstractBootstrap 依赖的抽象配置，保存通用的配置项，特殊的配置根据启动的类型分别放在ServerBootstrapConfig和BootstrapConfig中
+ * 目的是将配置项从Bootstrap中抽离开，维持单一原则
  */
 public abstract class AbstractBootstrapConfig<B extends AbstractBootstrap<B, C>, C extends Channel> {
 
+    //关联的boostrap
     protected final B bootstrap;
 
     protected AbstractBootstrapConfig(B bootstrap) {
@@ -40,6 +43,7 @@ public abstract class AbstractBootstrapConfig<B extends AbstractBootstrap<B, C>,
     /**
      * Returns the configured local address or {@code null} if non is configured yet.
      */
+    //配置的本地地址
     public final SocketAddress localAddress() {
         return bootstrap.localAddress();
     }
@@ -47,6 +51,7 @@ public abstract class AbstractBootstrapConfig<B extends AbstractBootstrap<B, C>,
     /**
      * Returns the configured {@link ChannelFactory} or {@code null} if non is configured yet.
      */
+    //Channel的工厂类
     @SuppressWarnings("deprecation")
     public final ChannelFactory<? extends C> channelFactory() {
         return bootstrap.channelFactory();
@@ -55,6 +60,7 @@ public abstract class AbstractBootstrapConfig<B extends AbstractBootstrap<B, C>,
     /**
      * Returns the configured {@link ChannelHandler} or {@code null} if non is configured yet.
      */
+    //处理器对象
     public final ChannelHandler handler() {
         return bootstrap.handler();
     }
@@ -62,6 +68,7 @@ public abstract class AbstractBootstrapConfig<B extends AbstractBootstrap<B, C>,
     /**
      * Returns a copy of the configured options.
      */
+    //通道选项
     public final Map<ChannelOption<?>, Object> options() {
         return bootstrap.options();
     }
@@ -69,6 +76,7 @@ public abstract class AbstractBootstrapConfig<B extends AbstractBootstrap<B, C>,
     /**
      * Returns a copy of the configured attributes.
      */
+    //特殊属性
     public final Map<AttributeKey<?>, Object> attrs() {
         return bootstrap.attrs();
     }
@@ -77,6 +85,7 @@ public abstract class AbstractBootstrapConfig<B extends AbstractBootstrap<B, C>,
      * Returns the configured {@link EventLoopGroup} or {@code null} if non is configured yet.
      */
     @SuppressWarnings("deprecation")
+    //主线程池
     public final EventLoopGroup group() {
         return bootstrap.group();
     }

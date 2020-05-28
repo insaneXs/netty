@@ -18,4 +18,9 @@
  * The helper classes with fluent API which enable an easy implementation of
  * typical client side and server side channel initialization.
  */
+/**
+ * 这个包是启动引导类相关的包，用户创建应用的主入口
+ * Bootstrap根据服务端还是客户端分成ServerBootstrap和Bootstrap两类，AbstractBootstrap是这两类的抽象父类
+ * 与之对应的其配置项对象也分成两类ServerBootstrapConfig和BootstrapConfig两类，AbstractBootstrapConfig是这两类的抽象父类
+ */
 package io.netty.bootstrap;

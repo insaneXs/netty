@@ -47,19 +47,33 @@ import java.util.Map;
  * <p>When not used in a {@link ServerBootstrap} context, the {@link #bind()} methods are useful for connectionless
  * transports such as datagram (UDP).</p>
  */
+
+/**
+ * 抽象启动引导类，其子类根据引导的是服务端还是客户端分成了ServerBootstrap和BootStrap两类
+ * @param <B> B表示Bootstrap具体类型
+ * @param <C> C表示Channel具体类型
+ */
 public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C extends Channel> implements Cloneable {
 
+    //主线程池
     volatile EventLoopGroup group;
     @SuppressWarnings("deprecation")
+    //channel工厂，负责创建channel，以TCP为例，底层是创建Jdk中的nio下的相关channel
     private volatile ChannelFactory<? extends C> channelFactory;
+
+    //本体地址
     private volatile SocketAddress localAddress;
+    //底层通信的配置项
     private final Map<ChannelOption<?>, Object> options = new LinkedHashMap<ChannelOption<?>, Object>();
+    //用来绑定附属信息
     private final Map<AttributeKey<?>, Object> attrs = new LinkedHashMap<AttributeKey<?>, Object>();
+    //主处理器
     private volatile ChannelHandler handler;
 
     AbstractBootstrap() {
         // Disallow extending from a different package.
     }
+
 
     AbstractBootstrap(AbstractBootstrap<B, C> bootstrap) {
         group = bootstrap.group;
@@ -78,6 +92,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
      * The {@link EventLoopGroup} which is used to handle all the events for the to-be-created
      * {@link Channel}
      */
+    //设置主线程池，方法返回自身，是Builder链的一种应用，方便快速构建，之后channel(),option()等方法也相同
     public B group(EventLoopGroup group) {
         if (group == null) {
             throw new NullPointerException("group");
@@ -99,10 +114,12 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
      * You either use this or {@link #channelFactory(io.netty.channel.ChannelFactory)} if your
      * {@link Channel} implementation has no no-args constructor.
      */
+    //设置底层使用的Channel类型
     public B channel(Class<? extends C> channelClass) {
         if (channelClass == null) {
             throw new NullPointerException("channelClass");
         }
+        //根据类型创建ChannelFactory，默认是通过反射进行实例化
         return channelFactory(new ReflectiveChannelFactory<C>(channelClass));
     }
 
@@ -137,6 +154,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
     /**
      * The {@link SocketAddress} which is used to bind the local "end" to.
      */
+    /************设置本地地址**************/
     public B localAddress(SocketAddress localAddress) {
         this.localAddress = localAddress;
         return self();
@@ -167,6 +185,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
      * Allow to specify a {@link ChannelOption} which is used for the {@link Channel} instances once they got
      * created. Use a value of {@code null} to remove a previous set {@link ChannelOption}.
      */
+    //设置通道配置
     public <T> B option(ChannelOption<T> option, T value) {
         if (option == null) {
             throw new NullPointerException("option");
@@ -187,6 +206,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
      * Allow to specify an initial attribute of the newly created {@link Channel}.  If the {@code value} is
      * {@code null}, the attribute of the specified {@code key} is removed.
      */
+    //设置额外属性
     public <T> B attr(AttributeKey<T> key, T value) {
         if (key == null) {
             throw new NullPointerException("key");
@@ -207,6 +227,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
      * Validate all the parameters. Sub-classes may override this, but should
      * call the super method in that case.
      */
+    //校验，这里只进行基础信息校验
     public B validate() {
         if (group == null) {
             throw new IllegalStateException("group not set");
@@ -314,12 +335,20 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
         }
     }
 
+    /**
+     * 初始化Channel并设置Future
+     * @return
+     */
     final ChannelFuture initAndRegister() {
         Channel channel = null;
         try {
+            //通过工厂创建Channel实例
+            //在这里应用工厂，主要是将Bootstrap和底层Channel解耦和，Netty因此具备了快速替换底层通信实现方式的能力
             channel = channelFactory.newChannel();
+            //针对Channel初始化操作，由子类根据自身情况实现
             init(channel);
         } catch (Throwable t) {
+            //如果出现异常，返回含有异常信息的Future
             if (channel != null) {
                 // channel can be null if newChannel crashed (eg SocketException("too many open files"))
                 channel.unsafe().closeForcibly();
@@ -331,7 +360,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
         }
 
         ChannelFuture regFuture = config().group().register(channel);
-        if (regFuture.cause() != null) {
+        if (regFuture.cause() != null) { //说明register过程发生异常
             if (channel.isRegistered()) {
                 channel.close();
             } else {
@@ -374,6 +403,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
     /**
      * the {@link ChannelHandler} to use for serving the requests.
      */
+    //设置handler
     public B handler(ChannelHandler handler) {
         if (handler == null) {
             throw new NullPointerException("handler");

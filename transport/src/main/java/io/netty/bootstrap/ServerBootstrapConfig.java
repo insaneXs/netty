@@ -27,6 +27,10 @@ import java.util.Map;
 /**
  * Exposes the configuration of a {@link ServerBootstrapConfig}.
  */
+
+/**
+ * ServerBootstrap相关的配置
+ */
 public final class ServerBootstrapConfig extends AbstractBootstrapConfig<ServerBootstrap, ServerChannel> {
 
     ServerBootstrapConfig(ServerBootstrap bootstrap) {
@@ -38,6 +42,7 @@ public final class ServerBootstrapConfig extends AbstractBootstrapConfig<ServerB
      * if non is configured yet.
      */
     @SuppressWarnings("deprecation")
+    //工作线程池
     public EventLoopGroup childGroup() {
         return bootstrap.childGroup();
     }
@@ -46,6 +51,7 @@ public final class ServerBootstrapConfig extends AbstractBootstrapConfig<ServerB
      * Returns the configured {@link ChannelHandler} be used for the child channels or {@code null}
      * if non is configured yet.
      */
+    //ChildChannel的Handler
     public ChannelHandler childHandler() {
         return bootstrap.childHandler();
     }
@@ -53,6 +59,7 @@ public final class ServerBootstrapConfig extends AbstractBootstrapConfig<ServerB
     /**
      * Returns a copy of the configured options which will be used for the child channels.
      */
+    //childChannel的ChannelOption
     public Map<ChannelOption<?>, Object> childOptions() {
         return bootstrap.childOptions();
     }
@@ -60,6 +67,7 @@ public final class ServerBootstrapConfig extends AbstractBootstrapConfig<ServerB
     /**
      * Returns a copy of the configured attributes which will be used for the child channels.
      */
+    //childChannel的额外属性集合
     public Map<AttributeKey<?>, Object> childAttrs() {
         return bootstrap.childAttrs();
     }

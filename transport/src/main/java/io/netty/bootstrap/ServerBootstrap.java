@@ -44,10 +44,19 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(ServerBootstrap.class);
 
+    /**
+     * 注意一点服务端存在两种Channel类型，一种负责监听通道建立情况，是主channel，另一种负责和远端的通信，是真正通信的channel
+     * 可以参考jdk nio中ServerSocketChannel.accept()会返回一个SocketChannel的情况
+     * 因此对于服务端来说，无论是handler还是option都是分成主和子两类的
+     */
+    //子通道的选项的子通道的属性
     private final Map<ChannelOption<?>, Object> childOptions = new LinkedHashMap<ChannelOption<?>, Object>();
     private final Map<AttributeKey<?>, Object> childAttrs = new LinkedHashMap<AttributeKey<?>, Object>();
+    //关联的配置项
     private final ServerBootstrapConfig config = new ServerBootstrapConfig(this);
+    //子线程池
     private volatile EventLoopGroup childGroup;
+    //子通道处理器
     private volatile ChannelHandler childHandler;
 
     public ServerBootstrap() { }
@@ -68,6 +77,7 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
      * Specify the {@link EventLoopGroup} which is used for the parent (acceptor) and the child (client).
      */
     @Override
+    //设置工作线程池 默认worker和master使用相同的线程
     public ServerBootstrap group(EventLoopGroup group) {
         return group(group, group);
     }
@@ -77,6 +87,7 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
      * {@link EventLoopGroup}'s are used to handle all the events and IO for {@link ServerChannel} and
      * {@link Channel}'s.
      */
+    //分别设置worker和master的线程池
     public ServerBootstrap group(EventLoopGroup parentGroup, EventLoopGroup childGroup) {
         super.group(parentGroup);
         if (childGroup == null) {
@@ -94,6 +105,7 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
      * (after the acceptor accepted the {@link Channel}). Use a value of {@code null} to remove a previous set
      * {@link ChannelOption}.
      */
+    //设置childChannel的通信属性
     public <T> ServerBootstrap childOption(ChannelOption<T> childOption, T value) {
         if (childOption == null) {
             throw new NullPointerException("childOption");
@@ -114,6 +126,7 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
      * Set the specific {@link AttributeKey} with the given value on every child {@link Channel}. If the value is
      * {@code null} the {@link AttributeKey} is removed
      */
+    //设置childChannel的属性
     public <T> ServerBootstrap childAttr(AttributeKey<T> childKey, T value) {
         if (childKey == null) {
             throw new NullPointerException("childKey");
@@ -129,6 +142,7 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
     /**
      * Set the {@link ChannelHandler} which is used to serve the request for the {@link Channel}'s.
      */
+    //设置子Handler
     public ServerBootstrap childHandler(ChannelHandler childHandler) {
         if (childHandler == null) {
             throw new NullPointerException("childHandler");
@@ -138,7 +152,9 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
     }
 
     @Override
+    //服务端Channel的初始化过程
     void init(Channel channel) throws Exception {
+        //设置主Channel的Option和Attribute
         final Map<ChannelOption<?>, Object> options = options0();
         synchronized (options) {
             setChannelOptions(channel, options, logger);
@@ -153,6 +169,8 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
             }
         }
 
+        //为主Channel的Pipeline添加Handler，
+        //除了用户自己添加的Handler外，还有一个负责监听连接建立的特殊Handler:ServerBootstrapAcceptor
         ChannelPipeline p = channel.pipeline();
 
         final EventLoopGroup currentChildGroup = childGroup;
@@ -170,14 +188,17 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
             @Override
             public void initChannel(final Channel ch) throws Exception {
                 final ChannelPipeline pipeline = ch.pipeline();
+                //先添加用户定义的handler
                 ChannelHandler handler = config.handler();
                 if (handler != null) {
                     pipeline.addLast(handler);
                 }
 
+                //异步添加ServerBootstrapAcceptor
                 ch.eventLoop().execute(new Runnable() {
                     @Override
                     public void run() {
+
                         pipeline.addLast(new ServerBootstrapAcceptor(
                                 ch, currentChildGroup, currentChildHandler, currentChildOptions, currentChildAttrs));
                     }
@@ -209,10 +230,14 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
         return new Map.Entry[size];
     }
 
+    //负责监听连接建立的特殊Handler
     private static class ServerBootstrapAcceptor extends ChannelInboundHandlerAdapter {
 
+        //子channel的线程池
         private final EventLoopGroup childGroup;
+        //子channel的Handler
         private final ChannelHandler childHandler;
+        //子channel的选项和属性
         private final Entry<ChannelOption<?>, Object>[] childOptions;
         private final Entry<AttributeKey<?>, Object>[] childAttrs;
         private final Runnable enableAutoReadTask;
@@ -238,13 +263,15 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
             };
         }
 
+        //因为ServerBootstrapAcceptor负责处理连接建立的Handler，因此其内部封装的Read事件对应的就是nio中的accept()，表示有新链接建立
         @Override
         @SuppressWarnings("unchecked")
         public void channelRead(ChannelHandlerContext ctx, Object msg) {
+            //获取新建立的链接对应的Channel
             final Channel child = (Channel) msg;
-
+            //为新的Channel添加handler
             child.pipeline().addLast(childHandler);
-
+            //设置选项和属性
             setChannelOptions(child, childOptions, logger);
 
             for (Entry<AttributeKey<?>, Object> e: childAttrs) {
@@ -252,6 +279,8 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
             }
 
             try {
+                //对新的Channel进行register(对应nio中的register selected key的过程)
+                //又是一个异步过程 因此添加监听 在完成时触发回掉
                 childGroup.register(child).addListener(new ChannelFutureListener() {
                     @Override
                     public void operationComplete(ChannelFuture future) throws Exception {

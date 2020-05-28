@@ -23,6 +23,10 @@ import java.net.SocketAddress;
 /**
  * Exposes the configuration of a {@link Bootstrap}.
  */
+
+/**
+ * Bootstrap的配置类
+ */
 public final class BootstrapConfig extends AbstractBootstrapConfig<Bootstrap, Channel> {
 
     BootstrapConfig(Bootstrap bootstrap) {
@@ -32,12 +36,20 @@ public final class BootstrapConfig extends AbstractBootstrapConfig<Bootstrap, Ch
     /**
      * Returns the configured remote address or {@code null} if non is configured yet.
      */
+    /**
+     * 远端地址
+     * @return
+     */
     public SocketAddress remoteAddress() {
         return bootstrap.remoteAddress();
     }
 
     /**
      * Returns the configured {@link AddressResolverGroup} or the default if non is configured yet.
+     */
+    /**
+     * 解析器
+     * @return
      */
     public AddressResolverGroup<?> resolver() {
         return bootstrap.resolver();
