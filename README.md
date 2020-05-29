@@ -50,3 +50,17 @@ Netty 源码阅读计划
                 - BootstrapConfig
                 - ServerBootstrap
                 - ServerBootstrapConfig
+            - channel
+                - nio
+                    - AbstractNioByteChannel
+                    - AbstractNioChannel  
+                - socket
+                    - nio
+                        - NioSocketChannel
+                        
+                    - DuplexChannel  
+                    - SocketChannel 
+                - Channel  
+                - ChannelOutboundInvoker  
+                - ReflectiveChannelFactory
+                        
