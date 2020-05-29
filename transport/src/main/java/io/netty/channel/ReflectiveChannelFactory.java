@@ -21,6 +21,8 @@ import io.netty.util.internal.StringUtil;
 /**
  * A {@link ChannelFactory} that instantiates a new {@link Channel} by invoking its default constructor reflectively.
  */
+
+//基于反射机制实现的ChannelFactory
 public class ReflectiveChannelFactory<T extends Channel> implements ChannelFactory<T> {
 
     private final Class<? extends T> clazz;

@@ -24,6 +24,10 @@ import java.net.Socket;
 /**
  * A duplex {@link Channel} that has two sides that can be shutdown independently.
  */
+
+/**
+ * 全双工的通道，输入输出可以独立关闭
+ */
 public interface DuplexChannel extends Channel {
     /**
      * Returns {@code true} if and only if the remote peer shut down its output so that no more

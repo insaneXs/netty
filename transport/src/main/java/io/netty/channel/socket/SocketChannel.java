@@ -15,21 +15,27 @@
  */
 package io.netty.channel.socket;
 
-import io.netty.channel.Channel;
-
 import java.net.InetSocketAddress;
 
 /**
  * A TCP/IP socket {@link Channel}.
  */
+
+/**
+ * 负责TCP/IP的一种Channel，
+ * 它和jdk nio中的SocketChannel名字相同，但这是Netty中的概念，二者定义的行为是不一样的，
+ */
 public interface SocketChannel extends DuplexChannel {
+    //获取对应的ServerSocketChannel
     @Override
     ServerSocketChannel parent();
-
+    //获取相关配置
     @Override
     SocketChannelConfig config();
+    //本地地址
     @Override
     InetSocketAddress localAddress();
+    //远端地址
     @Override
     InetSocketAddress remoteAddress();
 }

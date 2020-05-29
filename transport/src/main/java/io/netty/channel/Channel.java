@@ -74,6 +74,10 @@ import java.net.SocketAddress;
  * resources once you are done with the {@link Channel}. This ensures all resources are
  * released in a proper way, i.e. filehandles.
  */
+
+/**
+ * 通道接口
+ */
 public interface Channel extends AttributeMap, ChannelOutboundInvoker, Comparable<Channel> {
 
     /**
@@ -205,6 +209,9 @@ public interface Channel extends AttributeMap, ChannelOutboundInvoker, Comparabl
      *   <li>{@link #deregister(ChannelPromise)}</li>
      *   <li>{@link #voidPromise()}</li>
      * </ul>
+     */
+    /**
+     * Unsafe真正处理I/O操作的类，这个类不应该被用户所使用，且涉及实际数据传输的方法必须由I/O接口使用
      */
     interface Unsafe {
 

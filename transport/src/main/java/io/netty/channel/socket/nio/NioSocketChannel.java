@@ -51,6 +51,12 @@ import static io.netty.channel.internal.ChannelUtils.MAX_BYTES_PER_GATHERING_WRI
 /**
  * {@link io.netty.channel.socket.SocketChannel} which uses NIO selector based implementation.
  */
+
+/**
+ * 基于nio实现的SocketChannel,底层的操作都是委托给nio的channel,其内部调用过程较多，但是基本有一个规律：
+ * Channel.xxx() -> Unsafe.xxx() -> Unsafe.xxx0() -> Channel.doXxx() -> Channel.doXxx0()
+ * 上述过程某些步骤可能不存，读者按大致顺序查找即可
+ */
 public class NioSocketChannel extends AbstractNioByteChannel implements io.netty.channel.socket.SocketChannel {
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(NioSocketChannel.class);
     private static final SelectorProvider DEFAULT_SELECTOR_PROVIDER = SelectorProvider.provider();
@@ -97,6 +103,11 @@ public class NioSocketChannel extends AbstractNioByteChannel implements io.netty
      *
      * @param parent    the {@link Channel} which created this instance or {@code null} if it was created by the user
      * @param socket    the {@link SocketChannel} which will be used
+     */
+    /**
+     * 创建NioSocketChannel实例
+     * @param parent 对应的NioServerSocketChannel
+     * @param socket 内部关联的SocketChannel
      */
     public NioSocketChannel(Channel parent, SocketChannel socket) {
         super(parent, socket);
@@ -288,6 +299,7 @@ public class NioSocketChannel extends AbstractNioByteChannel implements io.netty
 
     @Override
     protected void doBind(SocketAddress localAddress) throws Exception {
+        //绑定本地地址
         doBind0(localAddress);
     }
 
@@ -301,14 +313,16 @@ public class NioSocketChannel extends AbstractNioByteChannel implements io.netty
 
     @Override
     protected boolean doConnect(SocketAddress remoteAddress, SocketAddress localAddress) throws Exception {
+        //先绑定本地地址
         if (localAddress != null) {
             doBind0(localAddress);
         }
 
         boolean success = false;
         try {
+            //再向远端发起连接
             boolean connected = SocketUtils.connect(javaChannel(), remoteAddress);
-            if (!connected) {
+            if (!connected) { //还未连接成功，则注册OP_CONNECT事件
                 selectionKey().interestOps(SelectionKey.OP_CONNECT);
             }
             success = true;
@@ -338,13 +352,16 @@ public class NioSocketChannel extends AbstractNioByteChannel implements io.netty
         javaChannel().close();
     }
 
+    //从nio的channel中读数据到ByteBuf,这一过程对于User来说是读取数据，但是针对ByteBuf而言，是将数据写入自身缓冲区
     @Override
     protected int doReadBytes(ByteBuf byteBuf) throws Exception {
         final RecvByteBufAllocator.Handle allocHandle = unsafe().recvBufAllocHandle();
+
         allocHandle.attemptedBytesRead(byteBuf.writableBytes());
         return byteBuf.writeBytes(javaChannel(), allocHandle.attemptedBytesRead());
     }
 
+    //从缓冲区输出数据到nio的channel
     @Override
     protected int doWriteBytes(ByteBuf buf) throws Exception {
         final int expectedWrittenBytes = buf.readableBytes();

@@ -40,12 +40,18 @@ import static io.netty.channel.internal.ChannelUtils.WRITE_STATUS_SNDBUF_FULL;
 /**
  * {@link AbstractNioChannel} base class for {@link Channel}s that operate on bytes.
  */
+
+/**
+ * 提供了NioChannel针对字节操作的能力
+ */
 public abstract class AbstractNioByteChannel extends AbstractNioChannel {
     private static final ChannelMetadata METADATA = new ChannelMetadata(false, 16);
+    //对口的处理类型：ByteBuf和FileRegion
     private static final String EXPECTED_TYPES =
             " (expected: " + StringUtil.simpleClassName(ByteBuf.class) + ", " +
             StringUtil.simpleClassName(FileRegion.class) + ')';
 
+    //刷新任务
     private final Runnable flushTask = new Runnable() {
         @Override
         public void run() {
@@ -69,6 +75,7 @@ public abstract class AbstractNioByteChannel extends AbstractNioChannel {
     /**
      * Shutdown the input side of the channel.
      */
+    //关闭输入部分的流
     protected abstract ChannelFuture shutdownInput();
 
     protected boolean isInputShutdown0() {
@@ -97,14 +104,14 @@ public abstract class AbstractNioByteChannel extends AbstractNioChannel {
     protected class NioByteUnsafe extends AbstractNioUnsafe {
 
         private void closeOnRead(ChannelPipeline pipeline) {
-            if (!isInputShutdown0()) {
-                if (isAllowHalfClosure(config())) {
-                    shutdownInput();
-                    pipeline.fireUserEventTriggered(ChannelInputShutdownEvent.INSTANCE);
-                } else {
+            if (!isInputShutdown0()) { //如果输入未关闭
+                if (isAllowHalfClosure(config())) { //双工通道是否允许半关闭
+                    shutdownInput(); //只关闭输入部分
+                    pipeline.fireUserEventTriggered(ChannelInputShutdownEvent.INSTANCE); //触发ChannelInputShutdownEvent
+                } else { //否则直接关闭Channel
                     close(voidPromise());
                 }
-            } else {
+            } else { //输入已关闭，处罚ChannelInputShutdownEvent
                 inputClosedSeenErrorOnRead = true;
                 pipeline.fireUserEventTriggered(ChannelInputShutdownReadComplete.INSTANCE);
             }
@@ -113,13 +120,14 @@ public abstract class AbstractNioByteChannel extends AbstractNioChannel {
         private void handleReadException(ChannelPipeline pipeline, ByteBuf byteBuf, Throwable cause, boolean close,
                 RecvByteBufAllocator.Handle allocHandle) {
             if (byteBuf != null) {
-                if (byteBuf.isReadable()) {
+                if (byteBuf.isReadable()) { //说明还有数据可读，触发Read事件
                     readPending = false;
                     pipeline.fireChannelRead(byteBuf);
-                } else {
+                } else { //没数据可读，释放byteBuf
                     byteBuf.release();
                 }
             }
+            //清理相关资源，在通道中传递异常
             allocHandle.readComplete();
             pipeline.fireChannelReadComplete();
             pipeline.fireExceptionCaught(cause);
@@ -131,7 +139,7 @@ public abstract class AbstractNioByteChannel extends AbstractNioChannel {
         @Override
         public final void read() {
             final ChannelConfig config = config();
-            if (shouldBreakReadReady(config)) {
+            if (shouldBreakReadReady(config)) {//不需要读，清理操作
                 clearReadPending();
                 return;
             }
@@ -144,12 +152,17 @@ public abstract class AbstractNioByteChannel extends AbstractNioChannel {
             boolean close = false;
             try {
                 do {
+                    //创建用来接收读取数据的ByteBuf
                     byteBuf = allocHandle.allocate(allocator);
+                    //保存读取的字节数
                     allocHandle.lastBytesRead(doReadBytes(byteBuf));
-                    if (allocHandle.lastBytesRead() <= 0) {
+                    if (allocHandle.lastBytesRead() <= 0) { //说明未读取到数据或是读取中发成异常
                         // nothing was read. release the buffer.
+                        //释放byteBuf
                         byteBuf.release();
                         byteBuf = null;
+
+                        //如果出现异常，
                         close = allocHandle.lastBytesRead() < 0;
                         if (close) {
                             // There is nothing left to read as we received an EOF.
@@ -160,17 +173,18 @@ public abstract class AbstractNioByteChannel extends AbstractNioChannel {
 
                     allocHandle.incMessagesRead(1);
                     readPending = false;
-                    pipeline.fireChannelRead(byteBuf);
+                    pipeline.fireChannelRead(byteBuf); //触发Read事件
                     byteBuf = null;
-                } while (allocHandle.continueReading());
+                } while (allocHandle.continueReading()); //是否需要继续读
 
+                //读取完成，触发ReadComplete事件
                 allocHandle.readComplete();
                 pipeline.fireChannelReadComplete();
 
-                if (close) {
+                if (close) { //处理关闭逻辑
                     closeOnRead(pipeline);
                 }
-            } catch (Throwable t) {
+            } catch (Throwable t) { //处理异常
                 handleReadException(pipeline, byteBuf, t, close, allocHandle);
             } finally {
                 // Check if there is a readPending which was not processed yet.
@@ -179,7 +193,7 @@ public abstract class AbstractNioByteChannel extends AbstractNioChannel {
                 // * The user called Channel.read() or ChannelHandlerContext.read() in channelReadComplete(...) method
                 //
                 // See https://github.com/netty/netty/issues/2254
-                if (!readPending && !config.isAutoRead()) {
+                if (!readPending && !config.isAutoRead()) { //处理一些用户错误调用造成的BUG
                     removeReadOp();
                 }
             }
