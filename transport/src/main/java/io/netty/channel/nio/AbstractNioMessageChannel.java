@@ -32,6 +32,10 @@ import java.util.List;
 /**
  * {@link AbstractNioChannel} base class for {@link Channel}s that operate on messages.
  */
+
+/**
+ * AbstractNioMessageChannel 操作对象而非Byte的实现
+ */
 public abstract class AbstractNioMessageChannel extends AbstractNioChannel {
     boolean inputShutdown;
 
@@ -55,13 +59,19 @@ public abstract class AbstractNioMessageChannel extends AbstractNioChannel {
         super.doBeginRead();
     }
 
+    /**
+     * 操作对象而非操作Byte的NioUnsafe实现
+     */
     private final class NioMessageUnsafe extends AbstractNioUnsafe {
 
         private final List<Object> readBuf = new ArrayList<Object>();
 
         @Override
         public void read() {
+            //校验是否由Netty线程池执行
             assert eventLoop().inEventLoop();
+
+            //获取配置和Pipeline
             final ChannelConfig config = config();
             final ChannelPipeline pipeline = pipeline();
             final RecvByteBufAllocator.Handle allocHandle = unsafe().recvBufAllocHandle();
@@ -70,8 +80,10 @@ public abstract class AbstractNioMessageChannel extends AbstractNioChannel {
             boolean closed = false;
             Throwable exception = null;
             try {
+                //读取数据
                 try {
                     do {
+                        //读取数据至readBuf
                         int localRead = doReadMessages(readBuf);
                         if (localRead == 0) {
                             break;
@@ -87,6 +99,7 @@ public abstract class AbstractNioMessageChannel extends AbstractNioChannel {
                     exception = t;
                 }
 
+                //触发READ 事件
                 int size = readBuf.size();
                 for (int i = 0; i < size; i ++) {
                     readPending = false;
@@ -94,14 +107,16 @@ public abstract class AbstractNioMessageChannel extends AbstractNioChannel {
                 }
                 readBuf.clear();
                 allocHandle.readComplete();
+                //触发读完成事件
                 pipeline.fireChannelReadComplete();
 
+                //处罚异常
                 if (exception != null) {
                     closed = closeOnReadError(exception);
-
                     pipeline.fireExceptionCaught(exception);
                 }
 
+                //如果需要关闭
                 if (closed) {
                     inputShutdown = true;
                     if (isOpen()) {
@@ -129,7 +144,7 @@ public abstract class AbstractNioMessageChannel extends AbstractNioChannel {
 
         for (;;) {
             Object msg = in.current();
-            if (msg == null) {
+            if (msg == null) { //没有可写的消息， 移除对WRITE事件的关注
                 // Wrote all messages.
                 if ((interestOps & SelectionKey.OP_WRITE) != 0) {
                     key.interestOps(interestOps & ~SelectionKey.OP_WRITE);
@@ -147,9 +162,9 @@ public abstract class AbstractNioMessageChannel extends AbstractNioChannel {
 
                 if (done) {
                     in.remove();
-                } else {
+                } else { //写未完成，等待下次写就绪时继续
                     // Did not write all messages.
-                    if ((interestOps & SelectionKey.OP_WRITE) == 0) {
+                    if ((interestOps & SelectionKey.OP_WRITE) == 0) { //添加对WRITE的关注
                         key.interestOps(interestOps | SelectionKey.OP_WRITE);
                     }
                     break;

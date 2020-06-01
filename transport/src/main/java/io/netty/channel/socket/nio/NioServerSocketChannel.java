@@ -40,6 +40,10 @@ import java.util.List;
  * A {@link io.netty.channel.socket.ServerSocketChannel} implementation which uses
  * NIO selector based implementation to accept new connections.
  */
+
+/**
+ * 基于NIO实现的SocketServerChannel
+ */
 public class NioServerSocketChannel extends AbstractNioMessageChannel
                              implements io.netty.channel.socket.ServerSocketChannel {
 
@@ -48,6 +52,11 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(NioServerSocketChannel.class);
 
+    /**
+     * 静态方法，创建内部的NIO Channel
+     * @param provider
+     * @return
+     */
     private static ServerSocketChannel newSocket(SelectorProvider provider) {
         try {
             /**
@@ -102,16 +111,19 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
         return config;
     }
 
+    //判断通道是否活跃
     @Override
     public boolean isActive() {
         return javaChannel().socket().isBound();
     }
 
+    //返回远端地址
     @Override
     public InetSocketAddress remoteAddress() {
         return null;
     }
 
+    //获取内部的nio channel
     @Override
     protected ServerSocketChannel javaChannel() {
         return (ServerSocketChannel) super.javaChannel();
@@ -136,11 +148,14 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
         javaChannel().close();
     }
 
+    //读入过程的实现
     @Override
     protected int doReadMessages(List<Object> buf) throws Exception {
+        //通过ServerSocketChannel.accept()得到连接的SocketChannel
         SocketChannel ch = SocketUtils.accept(javaChannel());
 
         try {
+            //然后添加至List<Object>中，返回读到的数据
             if (ch != null) {
                 buf.add(new NioSocketChannel(this, ch));
                 return 1;

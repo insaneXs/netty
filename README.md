@@ -54,10 +54,11 @@ Netty 源码阅读计划
                 - nio
                     - AbstractNioByteChannel
                     - AbstractNioChannel  
+                    - AbstractNioMessageChannel
                 - socket
                     - nio
                         - NioSocketChannel
-                        
+                        - NioSocketServerChannel
                     - DuplexChannel  
                     - SocketChannel 
                 - Channel  
