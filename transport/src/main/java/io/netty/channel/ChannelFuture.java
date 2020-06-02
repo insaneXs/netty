@@ -162,20 +162,32 @@ import java.util.concurrent.TimeUnit;
  * }
  * </pre>
  */
+
+/**
+ * 异步I/O操作的Future，和分类相比的最大差别就是这个Future绑定和I/O相关操作
+ */
 public interface ChannelFuture extends Future<Void> {
 
     /**
      * Returns a channel where the I/O operation associated with this
      * future takes place.
      */
+    /**
+     * 返回这个I/O 操作相关的Channel
+     * @return
+     */
     Channel channel();
 
+    /******override父类的接口，将返回值修改为ChannelFuture********/
+
+    /*******************添加监听*******************************/
     @Override
     ChannelFuture addListener(GenericFutureListener<? extends Future<? super Void>> listener);
 
     @Override
     ChannelFuture addListeners(GenericFutureListener<? extends Future<? super Void>>... listeners);
 
+    /********************移除监听****************************/
     @Override
     ChannelFuture removeListener(GenericFutureListener<? extends Future<? super Void>> listener);
 
@@ -207,6 +219,10 @@ public interface ChannelFuture extends Future<Void> {
      *     <li>{@link #sync()}</li>
      *     <li>{@link #syncUninterruptibly()}</li>
      * </ul>
+     */
+    /**
+     * 判断是否为VoidFuture，VoidFuture不允许对其操作
+     * @return
      */
     boolean isVoid();
 }

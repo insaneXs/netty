@@ -25,13 +25,21 @@ import java.util.concurrent.TimeoutException;
  *
  * @param <V>
  */
+
+/**
+ * Future接口的抽象实现，实现了get()方法
+ * @param <V>
+ */
 public abstract class AbstractFuture<V> implements Future<V> {
 
+    //阻塞等待
     @Override
     public V get() throws InterruptedException, ExecutionException {
+        //等待操作完成
         await();
-
+        //获取操作是否有异常
         Throwable cause = cause();
+        //没有异常返回操作结果，否则抛出异常
         if (cause == null) {
             return getNow();
         }
@@ -43,16 +51,20 @@ public abstract class AbstractFuture<V> implements Future<V> {
 
     @Override
     public V get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+        //等待操作完成
         if (await(timeout, unit)) {
+            //操作过程中是否发生异常
             Throwable cause = cause();
+            //没有 则返回结果
             if (cause == null) {
                 return getNow();
             }
+            //否则抛出异常
             if (cause instanceof CancellationException) {
                 throw (CancellationException) cause;
             }
             throw new ExecutionException(cause);
-        }
+        }//超时 抛出超时一场
         throw new TimeoutException();
     }
 }

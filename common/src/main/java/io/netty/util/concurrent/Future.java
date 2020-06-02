@@ -22,6 +22,11 @@ import java.util.concurrent.TimeUnit;
 /**
  * The result of an asynchronous operation.
  */
+
+/**
+ * 拓展了JUC中的Future，增加了异常返回，添加监听器等操作
+ * @param <V>
+ */
 @SuppressWarnings("ClassNameSameAsAncestorName")
 public interface Future<V> extends java.util.concurrent.Future<V> {
 
@@ -29,11 +34,13 @@ public interface Future<V> extends java.util.concurrent.Future<V> {
      * Returns {@code true} if and only if the I/O operation was completed
      * successfully.
      */
+    //操作是否成功
     boolean isSuccess();
 
     /**
      * returns {@code true} if and only if the operation can be cancelled via {@link #cancel(boolean)}.
      */
+    //操作是否被取消
     boolean isCancellable();
 
     /**
@@ -44,8 +51,10 @@ public interface Future<V> extends java.util.concurrent.Future<V> {
      *         {@code null} if succeeded or this future is not
      *         completed yet.
      */
+    //返回操作中产生的异常
     Throwable cause();
 
+    /********************添加监听*****************************/
     /**
      * Adds the specified listener to this future.  The
      * specified listener is notified when this future is
@@ -62,6 +71,7 @@ public interface Future<V> extends java.util.concurrent.Future<V> {
      */
     Future<V> addListeners(GenericFutureListener<? extends Future<? super V>>... listeners);
 
+    /********************移除监听******************************/
     /**
      * Removes the first occurrence of the specified listener from this future.
      * The specified listener is no longer notified when this
@@ -84,12 +94,14 @@ public interface Future<V> extends java.util.concurrent.Future<V> {
      * Waits for this future until it is done, and rethrows the cause of the failure if this future
      * failed.
      */
+    //同步等待操作完成
     Future<V> sync() throws InterruptedException;
 
     /**
      * Waits for this future until it is done, and rethrows the cause of the failure if this future
      * failed.
      */
+    //不会抛出中断的同步等待
     Future<V> syncUninterruptibly();
 
     /**
@@ -98,6 +110,7 @@ public interface Future<V> extends java.util.concurrent.Future<V> {
      * @throws InterruptedException
      *         if the current thread was interrupted
      */
+    //等待
     Future<V> await() throws InterruptedException;
 
     /**
@@ -105,6 +118,7 @@ public interface Future<V> extends java.util.concurrent.Future<V> {
      * interruption.  This method catches an {@link InterruptedException} and
      * discards it silently.
      */
+    //不会抛出中断的等待
     Future<V> awaitUninterruptibly();
 
     /**
@@ -157,6 +171,7 @@ public interface Future<V> extends java.util.concurrent.Future<V> {
      * As it is possible that a {@code null} value is used to mark the future as successful you also need to check
      * if the future is really done with {@link #isDone()} and not relay on the returned {@code null} value.
      */
+    //获取操作结果，如果值未就绪，返回null
     V getNow();
 
     /**
@@ -165,5 +180,6 @@ public interface Future<V> extends java.util.concurrent.Future<V> {
      * If the cancellation was successful it will fail the future with an {@link CancellationException}.
      */
     @Override
+    //取消
     boolean cancel(boolean mayInterruptIfRunning);
 }

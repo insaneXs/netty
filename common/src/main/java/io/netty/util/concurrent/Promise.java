@@ -18,6 +18,11 @@ package io.netty.util.concurrent;
 /**
  * Special {@link Future} which is writable.
  */
+
+/**
+ * 特殊的Future,可以外部设置结果
+ * @param <V>
+ */
 public interface Promise<V> extends Future<V> {
 
     /**
@@ -25,6 +30,12 @@ public interface Promise<V> extends Future<V> {
      * listeners.
      *
      * If it is success or failed already it will throw an {@link IllegalStateException}.
+     */
+    /**
+     * 将Promise设置成success，并且通知Listener
+     * 如果它已经成功或失败，抛出异常
+     * @param result
+     * @return
      */
     Promise<V> setSuccess(V result);
 
@@ -36,6 +47,11 @@ public interface Promise<V> extends Future<V> {
      *         a success. Otherwise {@code false} because this future is
      *         already marked as either a success or a failure.
      */
+    /**
+     * 尝试将Promise标记为Success
+     * @param result 只有当尝试成功时，才返回true
+     * @return
+     */
     boolean trySuccess(V result);
 
     /**
@@ -43,6 +59,11 @@ public interface Promise<V> extends Future<V> {
      * listeners.
      *
      * If it is success or failed already it will throw an {@link IllegalStateException}.
+     */
+    /**
+     * 标记为失败
+     * @param cause
+     * @return
      */
     Promise<V> setFailure(Throwable cause);
 
@@ -54,6 +75,11 @@ public interface Promise<V> extends Future<V> {
      *         a failure. Otherwise {@code false} because this future is
      *         already marked as either a success or a failure.
      */
+    /**
+     * 尝试标记为失败
+     * @param cause
+     * @return
+     */
     boolean tryFailure(Throwable cause);
 
     /**
@@ -62,20 +88,26 @@ public interface Promise<V> extends Future<V> {
      * @return {@code true} if and only if successfully marked this future as uncancellable or it is already done
      *         without being cancelled.  {@code false} if this future has been cancelled already.
      */
+    //设置为不可取消
     boolean setUncancellable();
 
+    /****************override 主要是修改父方法中的返回值***********************************/
+
+    //添加监听
     @Override
     Promise<V> addListener(GenericFutureListener<? extends Future<? super V>> listener);
 
     @Override
     Promise<V> addListeners(GenericFutureListener<? extends Future<? super V>>... listeners);
 
+    //移除监听
     @Override
     Promise<V> removeListener(GenericFutureListener<? extends Future<? super V>> listener);
 
     @Override
     Promise<V> removeListeners(GenericFutureListener<? extends Future<? super V>>... listeners);
 
+    //等待
     @Override
     Promise<V> await() throws InterruptedException;
 

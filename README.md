@@ -45,6 +45,11 @@ Netty 源码阅读计划
 
 ### io.netty.common  
     - io.netty.util
+        - concurrent
+            - AbstractFuture
+            - DefaultPromis
+            - Future
+            - Promise
         - ReferenceCounted
 
 ### io.netty.handler  
@@ -69,7 +74,10 @@ Netty 源码阅读计划
                         - NioSocketServerChannel
                     - DuplexChannel  
                     - SocketChannel 
-                - Channel  
-                - ChannelOutboundInvoker  
+                - Channel 
+                - ChannelFuture 
+                - ChannelOutboundInvoker 
+                - ChannelPromise 
+                - DefaultChannelPromise
                 - ReflectiveChannelFactory
                         
