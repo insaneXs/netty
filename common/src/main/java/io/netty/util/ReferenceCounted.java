@@ -29,12 +29,21 @@ package io.netty.util;
  * reference count becomes 0.
  * </p>
  */
+
+/**
+ * 表示某个对象的引用计数
+ */
 public interface ReferenceCounted {
     /**
      * Returns the reference count of this object.  If {@code 0}, it means this object has been deallocated.
      */
+    /**
+     * 返回引用计数
+     * @return
+     */
     int refCnt();
 
+    /*************************增加引用计数*************************************/
     /**
      * Increases the reference count by {@code 1}.
      */
@@ -45,6 +54,7 @@ public interface ReferenceCounted {
      */
     ReferenceCounted retain(int increment);
 
+    /*************************用来检测是否内存泄漏*********************************/
     /**
      * Records the current access location of this object for debugging purposes.
      * If this object is determined to be leaked, the information recorded by this operation will be provided to you
@@ -59,6 +69,7 @@ public interface ReferenceCounted {
      */
     ReferenceCounted touch(Object hint);
 
+    /*************************释放引用计数***********************************/
     /**
      * Decreases the reference count by {@code 1} and deallocates this object if the reference count reaches at
      * {@code 0}.

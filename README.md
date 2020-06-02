@@ -34,10 +34,18 @@ Netty 源码阅读计划
 ## 主要阅读模块及已完成明细
 主要要阅读的模块基本上涵盖和Netty-all中的内容，其中部分模块名称略有不同，读者可以自己对应下。
 ### io.netty.buffer  
+    - io.netty.buffer
+        - AbstractByteBuf
+        - AbstractReferenceCountedByteBuf
+        - ByteBuf  
+        - UnpooledDirectByteBuf
+        - UnpooledHeapByteBuf
 
 ### io.netty.codec  
 
 ### io.netty.common  
+    - io.netty.util
+        - ReferenceCounted
 
 ### io.netty.handler  
 

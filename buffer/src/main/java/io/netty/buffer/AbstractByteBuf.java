@@ -56,10 +56,14 @@ public abstract class AbstractByteBuf extends ByteBuf {
     static final ResourceLeakDetector<ByteBuf> leakDetector =
             ResourceLeakDetectorFactory.instance().newResourceLeakDetector(ByteBuf.class);
 
+    //读索引
     int readerIndex;
+    //写索引
     int writerIndex;
+    //用来保存marked状态
     private int markedReaderIndex;
     private int markedWriterIndex;
+    //最大容量
     private int maxCapacity;
 
     protected AbstractByteBuf(int maxCapacity) {
@@ -74,6 +78,7 @@ public abstract class AbstractByteBuf extends ByteBuf {
         return false;
     }
 
+    //转成只读接口
     @SuppressWarnings("deprecation")
     @Override
     public ByteBuf asReadOnly() {
@@ -97,6 +102,7 @@ public abstract class AbstractByteBuf extends ByteBuf {
         return readerIndex;
     }
 
+    //调整readerIndex
     @Override
     public ByteBuf readerIndex(int readerIndex) {
         if (readerIndex < 0 || readerIndex > writerIndex) {
@@ -112,6 +118,7 @@ public abstract class AbstractByteBuf extends ByteBuf {
         return writerIndex;
     }
 
+    //调整writeIndex
     @Override
     public ByteBuf writerIndex(int writerIndex) {
         if (writerIndex < readerIndex || writerIndex > capacity()) {
@@ -123,6 +130,7 @@ public abstract class AbstractByteBuf extends ByteBuf {
         return this;
     }
 
+    //设置读写索引
     @Override
     public ByteBuf setIndex(int readerIndex, int writerIndex) {
         if (readerIndex < 0 || readerIndex > writerIndex || writerIndex > capacity()) {
@@ -134,12 +142,14 @@ public abstract class AbstractByteBuf extends ByteBuf {
         return this;
     }
 
+    //重置索引
     @Override
     public ByteBuf clear() {
         readerIndex = writerIndex = 0;
         return this;
     }
 
+    //是否可读
     @Override
     public boolean isReadable() {
         return writerIndex > readerIndex;
@@ -150,6 +160,7 @@ public abstract class AbstractByteBuf extends ByteBuf {
         return writerIndex - readerIndex >= numBytes;
     }
 
+    //是否科协
     @Override
     public boolean isWritable() {
         return capacity() > writerIndex;
@@ -160,11 +171,13 @@ public abstract class AbstractByteBuf extends ByteBuf {
         return capacity() - writerIndex >= numBytes;
     }
 
+    //可读大小
     @Override
     public int readableBytes() {
         return writerIndex - readerIndex;
     }
 
+    //可写大小
     @Override
     public int writableBytes() {
         return capacity() - writerIndex;
@@ -175,30 +188,35 @@ public abstract class AbstractByteBuf extends ByteBuf {
         return maxCapacity() - writerIndex;
     }
 
+    //标记读索引
     @Override
     public ByteBuf markReaderIndex() {
         markedReaderIndex = readerIndex;
         return this;
     }
 
+    //重置读索引
     @Override
     public ByteBuf resetReaderIndex() {
         readerIndex(markedReaderIndex);
         return this;
     }
 
+    //标记写索引
     @Override
     public ByteBuf markWriterIndex() {
         markedWriterIndex = writerIndex;
         return this;
     }
 
+    //重置写索引
     @Override
     public ByteBuf resetWriterIndex() {
         writerIndex(markedWriterIndex);
         return this;
     }
 
+    //丢弃已读的字节，未读部分 前移至ByteBuf最前
     @Override
     public ByteBuf discardReadBytes() {
         ensureAccessible();
@@ -207,17 +225,21 @@ public abstract class AbstractByteBuf extends ByteBuf {
         }
 
         if (readerIndex != writerIndex) {
+            //字节拷贝
             setBytes(0, this, readerIndex, writerIndex - readerIndex);
+            //移动writeIndex
             writerIndex -= readerIndex;
             adjustMarkers(readerIndex);
+            //移动readerIndex
             readerIndex = 0;
-        } else {
+        } else { //读写相同 说明没有未读的部分
             adjustMarkers(readerIndex);
             writerIndex = readerIndex = 0;
         }
         return this;
     }
 
+    //丢弃已读数据
     @Override
     public ByteBuf discardSomeReadBytes() {
         ensureAccessible();
@@ -231,6 +253,7 @@ public abstract class AbstractByteBuf extends ByteBuf {
             return this;
         }
 
+        //如果已读数据大于容量的一半
         if (readerIndex >= capacity() >>> 1) {
             setBytes(0, this, readerIndex, writerIndex - readerIndex);
             writerIndex -= readerIndex;
@@ -240,6 +263,7 @@ public abstract class AbstractByteBuf extends ByteBuf {
         return this;
     }
 
+    //前移marker的索引
     protected final void adjustMarkers(int decrement) {
         int markedReaderIndex = this.markedReaderIndex;
         if (markedReaderIndex <= decrement) {
@@ -256,6 +280,7 @@ public abstract class AbstractByteBuf extends ByteBuf {
         }
     }
 
+    //确保是否仍然可写
     @Override
     public ByteBuf ensureWritable(int minWritableBytes) {
         if (minWritableBytes < 0) {
@@ -334,6 +359,7 @@ public abstract class AbstractByteBuf extends ByteBuf {
         return new SwappedByteBuf(this);
     }
 
+    //获取指定位置的字节
     @Override
     public byte getByte(int index) {
         checkIndex(index);
@@ -342,6 +368,7 @@ public abstract class AbstractByteBuf extends ByteBuf {
 
     protected abstract byte _getByte(int index);
 
+    /**************获取制定位置的字节 转换成相应的类型**********************/
     @Override
     public boolean getBoolean(int index) {
         return getByte(index) != 0;
@@ -488,6 +515,10 @@ public abstract class AbstractByteBuf extends ByteBuf {
         return this;
     }
 
+    /******************************************************/
+
+
+    //读取字符序列
     @Override
     public CharSequence getCharSequence(int index, int length, Charset charset) {
         // TODO: We could optimize this for UTF8 and US_ASCII
@@ -501,6 +532,7 @@ public abstract class AbstractByteBuf extends ByteBuf {
         return sequence;
     }
 
+    /***********************设置值************************/
     @Override
     public ByteBuf setByte(int index, int value) {
         checkIndex(index);
@@ -702,6 +734,9 @@ public abstract class AbstractByteBuf extends ByteBuf {
         return bytes.length;
     }
 
+    /*****************************************************************/
+
+    /*********************默认读下一个数据******************************/
     @Override
     public byte readByte() {
         checkReadableBytes0(1);
@@ -837,7 +872,9 @@ public abstract class AbstractByteBuf extends ByteBuf {
     public double readDouble() {
         return Double.longBitsToDouble(readLong());
     }
+    /**********************************************************/
 
+    /********************读取指定长度****************************/
     @Override
     public ByteBuf readBytes(int length) {
         checkReadableBytes(length);
@@ -941,6 +978,7 @@ public abstract class AbstractByteBuf extends ByteBuf {
         return this;
     }
 
+    //跳过一定字节
     @Override
     public ByteBuf skipBytes(int length) {
         checkReadableBytes(length);
@@ -948,6 +986,7 @@ public abstract class AbstractByteBuf extends ByteBuf {
         return this;
     }
 
+    /*********************写入一个值**********************************/
     @Override
     public ByteBuf writeBoolean(boolean value) {
         writeByte(value ? 1 : 0);
@@ -1042,7 +1081,9 @@ public abstract class AbstractByteBuf extends ByteBuf {
         writeLong(Double.doubleToRawLongBits(value));
         return this;
     }
+    /****************************************************/
 
+    /*******************写入字节数组***********************/
     @Override
     public ByteBuf writeBytes(byte[] src, int srcIndex, int length) {
         ensureWritable(length);
@@ -1165,22 +1206,36 @@ public abstract class AbstractByteBuf extends ByteBuf {
         return written;
     }
 
+
+    /**
+     * 拷贝一份副本，对副本的修改不会影响原始数据
+     * @return
+     */
     @Override
     public ByteBuf copy() {
         return copy(readerIndex, readableBytes());
     }
 
+    /**
+     * 创建此ByteBuf的视图
+     * @return
+     */
     @Override
     public ByteBuf duplicate() {
         ensureAccessible();
         return new UnpooledDuplicatedByteBuf(this);
     }
 
+    //获取视图并增加引用
     @Override
     public ByteBuf retainedDuplicate() {
         return duplicate().retain();
     }
 
+    /**
+     * 创建此ByteBuf的切片视图
+     * @return
+     */
     @Override
     public ByteBuf slice() {
         return slice(readerIndex, readableBytes());
@@ -1202,6 +1257,7 @@ public abstract class AbstractByteBuf extends ByteBuf {
         return slice(index, length).retain();
     }
 
+    //将ByteBuf转成Nio的ByteBuffer
     @Override
     public ByteBuffer nioBuffer() {
         return nioBuffer(readerIndex, readableBytes());
@@ -1212,6 +1268,7 @@ public abstract class AbstractByteBuf extends ByteBuf {
         return nioBuffers(readerIndex, readableBytes());
     }
 
+    //将ByteBuf内容转成字符串输出
     @Override
     public String toString(Charset charset) {
         return toString(readerIndex, readableBytes(), charset);
@@ -1222,6 +1279,7 @@ public abstract class AbstractByteBuf extends ByteBuf {
         return ByteBufUtil.decodeString(this, index, length, charset);
     }
 
+    //查找某个字节第一次出现的位置
     @Override
     public int indexOf(int fromIndex, int toIndex, byte value) {
         return ByteBufUtil.indexOf(this, fromIndex, toIndex, value);
@@ -1238,6 +1296,7 @@ public abstract class AbstractByteBuf extends ByteBuf {
         return bytesBefore(readerIndex(), length, value);
     }
 
+    //查找出现指定字节之前 字节数量
     @Override
     public int bytesBefore(int index, int length, byte value) {
         int endIndex = indexOf(index, index + length, value);
@@ -1247,6 +1306,7 @@ public abstract class AbstractByteBuf extends ByteBuf {
         return endIndex - index;
     }
 
+    //以指定的处理器以升序的方式遍历字节
     @Override
     public int forEachByte(ByteProcessor processor) {
         ensureAccessible();
@@ -1279,6 +1339,7 @@ public abstract class AbstractByteBuf extends ByteBuf {
         return -1;
     }
 
+    //以制定的处理器以降序的方式遍历字节
     @Override
     public int forEachByteDesc(ByteProcessor processor) {
         ensureAccessible();
@@ -1348,6 +1409,7 @@ public abstract class AbstractByteBuf extends ByteBuf {
         return buf.toString();
     }
 
+    /*********************检测是否越界***********************/
     protected final void checkIndex(int index) {
         checkIndex(index, 1);
     }

@@ -64,6 +64,7 @@ public class UnpooledDirectByteBuf extends AbstractReferenceCountedByteBuf {
         }
 
         this.alloc = alloc;
+        //创建 DirectByteBuffer,并设置buffer
         setByteBuffer(ByteBuffer.allocateDirect(initialCapacity));
     }
 
@@ -109,6 +110,7 @@ public class UnpooledDirectByteBuf extends AbstractReferenceCountedByteBuf {
     /**
      * Free a direct {@link ByteBuffer}
      */
+    //释放DirectByteBuffer
     protected void freeDirect(ByteBuffer buffer) {
         PlatformDependent.freeDirectBuffer(buffer);
     }
@@ -138,6 +140,7 @@ public class UnpooledDirectByteBuf extends AbstractReferenceCountedByteBuf {
         return capacity;
     }
 
+    //重新调整容量
     @Override
     public ByteBuf capacity(int newCapacity) {
         checkNewCapacity(newCapacity);
@@ -208,6 +211,7 @@ public class UnpooledDirectByteBuf extends AbstractReferenceCountedByteBuf {
         throw new UnsupportedOperationException();
     }
 
+    /*************获取字节数据*************************/
     @Override
     public byte getByte(int index) {
         ensureAccessible();
@@ -359,6 +363,7 @@ public class UnpooledDirectByteBuf extends AbstractReferenceCountedByteBuf {
         return this;
     }
 
+    /********************写字节数据*******************************/
     @Override
     public ByteBuf setByte(int index, int value) {
         ensureAccessible();

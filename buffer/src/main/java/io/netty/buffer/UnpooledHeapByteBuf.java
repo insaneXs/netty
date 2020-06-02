@@ -35,10 +35,17 @@ import static io.netty.util.internal.ObjectUtil.checkNotNull;
  * {@link UnpooledByteBufAllocator#heapBuffer(int, int)}, {@link Unpooled#buffer(int)} and
  * {@link Unpooled#wrappedBuffer(byte[])} instead of calling the constructor explicitly.
  */
+
+/**
+ * 不池化管理的堆字节缓冲区
+ */
 public class UnpooledHeapByteBuf extends AbstractReferenceCountedByteBuf {
 
+    //分配器
     private final ByteBufAllocator alloc;
+    //字节
     byte[] array;
+    //nio ByteBuffer
     private ByteBuffer tmpNioBuf;
 
     /**
@@ -47,6 +54,7 @@ public class UnpooledHeapByteBuf extends AbstractReferenceCountedByteBuf {
      * @param initialCapacity the initial capacity of the underlying byte array
      * @param maxCapacity the max capacity of the underlying byte array
      */
+    //创建堆内存字节缓冲区
     public UnpooledHeapByteBuf(ByteBufAllocator alloc, int initialCapacity, int maxCapacity) {
         super(maxCapacity);
 
@@ -56,9 +64,11 @@ public class UnpooledHeapByteBuf extends AbstractReferenceCountedByteBuf {
             throw new IllegalArgumentException(String.format(
                     "initialCapacity(%d) > maxCapacity(%d)", initialCapacity, maxCapacity));
         }
-
+        //缓冲区内存分配器
         this.alloc = alloc;
+        //初始化内部数组
         setArray(allocateArray(initialCapacity));
+        //初始化读写索引
         setIndex(0, 0);
     }
 
@@ -68,6 +78,7 @@ public class UnpooledHeapByteBuf extends AbstractReferenceCountedByteBuf {
      * @param initialArray the initial underlying byte array
      * @param maxCapacity the max capacity of the underlying byte array
      */
+    //创建堆内存字节缓冲区
     protected UnpooledHeapByteBuf(ByteBufAllocator alloc, byte[] initialArray, int maxCapacity) {
         super(maxCapacity);
 
@@ -92,6 +103,7 @@ public class UnpooledHeapByteBuf extends AbstractReferenceCountedByteBuf {
         // NOOP
     }
 
+    //设置内部字节数组
     private void setArray(byte[] initialArray) {
         array = initialArray;
         tmpNioBuf = null;
@@ -112,32 +124,40 @@ public class UnpooledHeapByteBuf extends AbstractReferenceCountedByteBuf {
         return false;
     }
 
+    //容量
     @Override
     public int capacity() {
         return array.length;
     }
 
+    //调整缓冲区容量
     @Override
     public ByteBuf capacity(int newCapacity) {
         checkNewCapacity(newCapacity);
 
         int oldCapacity = array.length;
         byte[] oldArray = array;
+        //扩容情况
         if (newCapacity > oldCapacity) {
+            //创建新数组并拷贝数据
             byte[] newArray = allocateArray(newCapacity);
             System.arraycopy(oldArray, 0, newArray, 0, oldArray.length);
+            //更新新数组 释放旧数组
             setArray(newArray);
             freeArray(oldArray);
-        } else if (newCapacity < oldCapacity) {
+        } else if (newCapacity < oldCapacity) { //需要裁剪
             byte[] newArray = allocateArray(newCapacity);
             int readerIndex = readerIndex();
-            if (readerIndex < newCapacity) {
+            if (readerIndex < newCapacity) { //裁剪后还有未读数据
+                //调整写索引
                 int writerIndex = writerIndex();
                 if (writerIndex > newCapacity) {
                     writerIndex(writerIndex = newCapacity);
                 }
+                //数组拷贝
                 System.arraycopy(oldArray, readerIndex, newArray, readerIndex, writerIndex - readerIndex);
             } else {
+                //更新读写索引
                 setIndex(newCapacity, newCapacity);
             }
             setArray(newArray);
@@ -326,6 +346,7 @@ public class UnpooledHeapByteBuf extends AbstractReferenceCountedByteBuf {
         return (ByteBuffer) internalNioBuffer().clear().position(index).limit(index + length);
     }
 
+    /*****************获取字节********************/
     @Override
     public byte getByte(int index) {
         ensureAccessible();
@@ -425,6 +446,7 @@ public class UnpooledHeapByteBuf extends AbstractReferenceCountedByteBuf {
         return HeapByteBufUtil.getLongLE(array, index);
     }
 
+    /*****************写字节********************/
     @Override
     public ByteBuf setByte(int index, int value) {
         ensureAccessible();

@@ -246,6 +246,10 @@ import java.nio.charset.UnsupportedCharsetException;
  * {@link ByteBufOutputStream}.
  */
 @SuppressWarnings("ClassMayBeInterface")
+/**
+ * 字节缓存区，用来存放字节数组，提供了随机访问和顺序访问的能力
+ * 建议用户不要直接使用构造函数创建，而是使用工具方法创建，例如Unpool.
+ */
 public abstract class ByteBuf implements ReferenceCounted, Comparable<ByteBuf> {
 
     /**
@@ -267,6 +271,7 @@ public abstract class ByteBuf implements ReferenceCounted, Comparable<ByteBuf> {
      * {@link #ensureWritable(int)}, those methods will raise an
      * {@link IllegalArgumentException}.
      */
+
     public abstract int maxCapacity();
 
     /**

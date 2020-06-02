@@ -27,9 +27,11 @@ import static io.netty.util.internal.ObjectUtil.checkPositive;
  */
 public abstract class AbstractReferenceCountedByteBuf extends AbstractByteBuf {
 
+    //使用Unsafe和CAS操作，保证对某个字段的更新是线程安全的
     private static final AtomicIntegerFieldUpdater<AbstractReferenceCountedByteBuf> refCntUpdater =
             AtomicIntegerFieldUpdater.newUpdater(AbstractReferenceCountedByteBuf.class, "refCnt");
 
+    //引用计数
     private volatile int refCnt;
 
     protected AbstractReferenceCountedByteBuf(int maxCapacity) {
@@ -59,8 +61,10 @@ public abstract class AbstractReferenceCountedByteBuf extends AbstractByteBuf {
         return retain0(checkPositive(increment, "increment"));
     }
 
+    //增加引用计数
     private ByteBuf retain0(final int increment) {
         int oldRef = refCntUpdater.getAndAdd(this, increment);
+        //避免溢出
         if (oldRef <= 0 || oldRef + increment < oldRef) {
             // Ensure we don't resurrect (which means the refCnt was 0) and also that we encountered an overflow.
             refCntUpdater.getAndAdd(this, -increment);
@@ -89,12 +93,19 @@ public abstract class AbstractReferenceCountedByteBuf extends AbstractByteBuf {
         return release0(checkPositive(decrement, "decrement"));
     }
 
+    /**
+     * 减少引用计数
+     * @param decrement 减少次数
+     * @return true 表示需要回收  false表示不需要回收
+     */
     private boolean release0(int decrement) {
+        //减少引用计数
         int oldRef = refCntUpdater.getAndAdd(this, -decrement);
+        //如果引用计数为0，则释放
         if (oldRef == decrement) {
             deallocate();
             return true;
-        } else if (oldRef < decrement || oldRef - decrement > oldRef) {
+        } else if (oldRef < decrement || oldRef - decrement > oldRef) { //避免溢出
             // Ensure we don't over-release, and avoid underflow.
             refCntUpdater.getAndAdd(this, decrement);
             throw new IllegalReferenceCountException(oldRef, -decrement);
