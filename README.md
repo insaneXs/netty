@@ -19,7 +19,7 @@ Netty 源码阅读计划
  * `io.netty.codec.stomp`
  * `io.netty.codec.xml`
  * `io.netty.common` 通用模块，提供特殊线程池，工具类等
- * `io.netty.handler` 消息处理器，负责在`pipline`中加工消息
+ * `io.netty.handler` 消息处理器，负责在`pipeline`中加工消息
  * `io.netty.handler.proxy` 
  * `io.netty.resolver` 解析器，负责解析IP/HOST
  * `io.netty.resolver.dns`
@@ -74,10 +74,18 @@ Netty 源码阅读计划
                         - NioSocketServerChannel
                     - DuplexChannel  
                     - SocketChannel 
+                - AbstractChannel
+                - AbstractChannelHandlerContext
+                - AbstractServerChannel
                 - Channel 
                 - ChannelFuture 
-                - ChannelOutboundInvoker 
+                - ChannelHandlerContext
+                - ChannelInboundInvoker
+                - ChannelOutboundInvoker
+                - ChannelPipeline 
                 - ChannelPromise 
+                - DefaultChannelHandlerContext
+                - DefaultChannelPipeline
                 - DefaultChannelPromise
                 - ReflectiveChannelFactory
                         

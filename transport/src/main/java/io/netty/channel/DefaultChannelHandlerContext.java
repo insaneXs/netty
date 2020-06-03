@@ -17,10 +17,12 @@ package io.netty.channel;
 
 import io.netty.util.concurrent.EventExecutor;
 
+//AbstractChannelHandlerContext的默认实现
 final class DefaultChannelHandlerContext extends AbstractChannelHandlerContext {
 
     private final ChannelHandler handler;
 
+    //绑定了ChannelHandler
     DefaultChannelHandlerContext(
             DefaultChannelPipeline pipeline, EventExecutor executor, String name, ChannelHandler handler) {
         super(pipeline, executor, name, isInbound(handler), isOutbound(handler));
@@ -35,6 +37,7 @@ final class DefaultChannelHandlerContext extends AbstractChannelHandlerContext {
         return handler;
     }
 
+    //根据Handler确定出入站标志位
     private static boolean isInbound(ChannelHandler handler) {
         return handler instanceof ChannelInboundHandler;
     }

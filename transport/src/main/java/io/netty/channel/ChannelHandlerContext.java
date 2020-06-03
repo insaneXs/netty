@@ -127,11 +127,13 @@ public interface ChannelHandlerContext extends AttributeMap, ChannelInboundInvok
     /**
      * Return the {@link Channel} which is bound to the {@link ChannelHandlerContext}.
      */
+    //返回关联的channel
     Channel channel();
 
     /**
      * Returns the {@link EventExecutor} which is used to execute an arbitrary task.
      */
+    //绑定的线程池
     EventExecutor executor();
 
     /**
@@ -139,11 +141,13 @@ public interface ChannelHandlerContext extends AttributeMap, ChannelInboundInvok
      * was added to the {@link ChannelPipeline}. This name can also be used to access the registered
      * {@link ChannelHandler} from the {@link ChannelPipeline}.
      */
+    //返回名字
     String name();
 
     /**
      * The {@link ChannelHandler} that is bound this {@link ChannelHandlerContext}.
      */
+    //返回绑定的ChannelHandlerContext
     ChannelHandler handler();
 
     /**
@@ -151,8 +155,10 @@ public interface ChannelHandlerContext extends AttributeMap, ChannelInboundInvok
      * from the {@link ChannelPipeline}. Note that this method is only meant to be called from with in the
      * {@link EventLoop}.
      */
+    //绑定的ChannelHandler是否被移除
     boolean isRemoved();
 
+    /*********************重载方法，修改返回值**************************/
     @Override
     ChannelHandlerContext fireChannelRegistered();
 
@@ -189,16 +195,19 @@ public interface ChannelHandlerContext extends AttributeMap, ChannelInboundInvok
     /**
      * Return the assigned {@link ChannelPipeline}
      */
+    //关联的Pipeline
     ChannelPipeline pipeline();
 
     /**
      * Return the assigned {@link ByteBufAllocator} which will be used to allocate {@link ByteBuf}s.
      */
+    //关联的ByteBufAllocator
     ByteBufAllocator alloc();
 
     /**
      * @deprecated Use {@link Channel#attr(AttributeKey)}
      */
+    //绑定属性
     @Deprecated
     @Override
     <T> Attribute<T> attr(AttributeKey<T> key);
@@ -208,5 +217,6 @@ public interface ChannelHandlerContext extends AttributeMap, ChannelInboundInvok
      */
     @Deprecated
     @Override
+    //获取属性
     <T> boolean hasAttr(AttributeKey<T> key);
 }

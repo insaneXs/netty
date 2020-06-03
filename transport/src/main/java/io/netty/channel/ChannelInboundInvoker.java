@@ -15,7 +15,7 @@
  */
 package io.netty.channel;
 
-public interface ChannelInboundInvoker {
+public interface  ChannelInboundInvoker {
 
     /**
      * A {@link Channel} was registered to its {@link EventLoop}.

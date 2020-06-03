@@ -213,6 +213,12 @@ import java.util.NoSuchElementException;
  * For example, you can insert an encryption handler when sensitive information is about to be exchanged, and remove it
  * after the exchange.
  */
+
+/**
+ * 通道
+ * I/O events 和 I/O operations都会经由ChannelPipeline传递给管道的ChannelHandler
+ * 提供了添加，移除，替换管道内的Handler的方法
+ */
 public interface ChannelPipeline
         extends ChannelInboundInvoker, ChannelOutboundInvoker, Iterable<Entry<String, ChannelHandler>> {
 
@@ -581,11 +587,13 @@ public interface ChannelPipeline
      *
      * @return the channel. {@code null} if this pipeline is not attached yet.
      */
+    //关联的Channel
     Channel channel();
 
     /**
      * Returns the {@link List} of the handler names.
      */
+    //获取Handler的names
     List<String> names();
 
     /**
@@ -594,6 +602,7 @@ public interface ChannelPipeline
      */
     Map<String, ChannelHandler> toMap();
 
+    /*******************重载方法，修改返回值******************************/
     @Override
     ChannelPipeline fireChannelRegistered();
 
