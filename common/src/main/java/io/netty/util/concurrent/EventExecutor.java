@@ -22,6 +22,10 @@ package io.netty.util.concurrent;
  * way to access methods.
  *
  */
+
+/**
+ * 异步的事件执行器
+ */
 public interface EventExecutor extends EventExecutorGroup {
 
     /**
@@ -33,11 +37,13 @@ public interface EventExecutor extends EventExecutorGroup {
     /**
      * Return the {@link EventExecutorGroup} which is the parent of this {@link EventExecutor},
      */
+    //关联的EventExecutorGroup
     EventExecutorGroup parent();
 
     /**
      * Calls {@link #inEventLoop(Thread)} with {@link Thread#currentThread()} as argument
      */
+    //当前线程是否在Event Loop中
     boolean inEventLoop();
 
     /**
@@ -49,11 +55,13 @@ public interface EventExecutor extends EventExecutorGroup {
     /**
      * Return a new {@link Promise}.
      */
+    //返回一个Promise
     <V> Promise<V> newPromise();
 
     /**
      * Create a new {@link ProgressivePromise}.
      */
+    //返回一个ProgressivePromise
     <V> ProgressivePromise<V> newProgressivePromise();
 
     /**
@@ -61,6 +69,7 @@ public interface EventExecutor extends EventExecutorGroup {
      * will return {@code true}. All {@link FutureListener} added to it will be notified directly. Also
      * every call of blocking methods will just return without blocking.
      */
+    //返回一个Future，且已经被设置为成功
     <V> Future<V> newSucceededFuture(V result);
 
     /**
@@ -68,5 +77,6 @@ public interface EventExecutor extends EventExecutorGroup {
      * will return {@code false}. All {@link FutureListener} added to it will be notified directly. Also
      * every call of blocking methods will just return without blocking.
      */
+    //返回一个Future,且已经被设置为失败
     <V> Future<V> newFailedFuture(Throwable cause);
 }

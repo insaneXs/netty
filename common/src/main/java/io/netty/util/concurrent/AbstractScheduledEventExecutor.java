@@ -38,6 +38,7 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
                 }
             };
 
+    //优先级队列
     PriorityQueue<ScheduledFutureTask<?>> scheduledTaskQueue;
 
     protected AbstractScheduledEventExecutor() {
@@ -51,6 +52,7 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
         return ScheduledFutureTask.nanoTime();
     }
 
+    //返回优先级队列
     PriorityQueue<ScheduledFutureTask<?>> scheduledTaskQueue() {
         if (scheduledTaskQueue == null) {
             scheduledTaskQueue = new DefaultPriorityQueue<ScheduledFutureTask<?>>(
@@ -70,6 +72,7 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
      *
      * This method MUST be called only when {@link #inEventLoop()} is {@code true}.
      */
+    //取消定时任务，必须由EventLoop执行
     protected void cancelScheduledTasks() {
         assert inEventLoop();
         PriorityQueue<ScheduledFutureTask<?>> scheduledTaskQueue = this.scheduledTaskQueue;
@@ -90,6 +93,7 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
     /**
      * @see #pollScheduledTask(long)
      */
+    //从对头返回需要被执行的任务
     protected final Runnable pollScheduledTask() {
         return pollScheduledTask(nanoTime());
     }
@@ -117,6 +121,7 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
     /**
      * Return the nanoseconds when the next scheduled task is ready to be run or {@code -1} if no task is scheduled.
      */
+    //优先级队列中队首的任务的执行时间
     protected final long nextScheduledTaskNano() {
         Queue<ScheduledFutureTask<?>> scheduledTaskQueue = this.scheduledTaskQueue;
         ScheduledFutureTask<?> scheduledTask = scheduledTaskQueue == null ? null : scheduledTaskQueue.peek();
@@ -126,6 +131,7 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
         return Math.max(0, scheduledTask.deadlineNanos() - nanoTime());
     }
 
+    //返回但不移除优先级队列中的对首的任务
     final ScheduledFutureTask<?> peekScheduledTask() {
         Queue<ScheduledFutureTask<?>> scheduledTaskQueue = this.scheduledTaskQueue;
         if (scheduledTaskQueue == null) {
@@ -137,12 +143,14 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
     /**
      * Returns {@code true} if a scheduled task is ready for processing.
      */
+    //返回是否有需要执行的定时任务
     protected final boolean hasScheduledTasks() {
         Queue<ScheduledFutureTask<?>> scheduledTaskQueue = this.scheduledTaskQueue;
         ScheduledFutureTask<?> scheduledTask = scheduledTaskQueue == null ? null : scheduledTaskQueue.peek();
         return scheduledTask != null && scheduledTask.deadlineNanos() <= nanoTime();
     }
 
+    //提交定时任务
     @Override
     public ScheduledFuture<?> schedule(Runnable command, long delay, TimeUnit unit) {
         ObjectUtil.checkNotNull(command, "command");
@@ -169,6 +177,7 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
                 this, callable, ScheduledFutureTask.deadlineNanos(unit.toNanos(delay))));
     }
 
+    //提交按一定频率执行的任务
     @Override
     public ScheduledFuture<?> scheduleAtFixedRate(Runnable command, long initialDelay, long period, TimeUnit unit) {
         ObjectUtil.checkNotNull(command, "command");
@@ -189,6 +198,7 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
                 ScheduledFutureTask.deadlineNanos(unit.toNanos(initialDelay)), unit.toNanos(period)));
     }
 
+    //提交固定延迟执行的任务
     @Override
     public ScheduledFuture<?> scheduleWithFixedDelay(Runnable command, long initialDelay, long delay, TimeUnit unit) {
         ObjectUtil.checkNotNull(command, "command");
@@ -225,6 +235,7 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
         // NOOP
     }
 
+    //提交任务的本质就是将任务添加至队列
     <V> ScheduledFuture<V> schedule(final ScheduledFutureTask<V> task) {
         if (inEventLoop()) {
             scheduledTaskQueue().add(task);
@@ -240,6 +251,7 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
         return task;
     }
 
+    //从队列中移除任务
     final void removeScheduled(final ScheduledFutureTask<?> task) {
         if (inEventLoop()) {
             scheduledTaskQueue().removeTyped(task);

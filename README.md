@@ -46,10 +46,20 @@ Netty 源码阅读计划
 ### io.netty.common  
     - io.netty.util
         - concurrent
+            - AbstractEventExecutor
+            - AbstractEventExecutorGroup
             - AbstractFuture
-            - DefaultPromis
+            - AbstractScheduledEventExecutor
+            - DefaultEventExecutor
+            - DefaultEventExecutorGroup
+            - DefaultPromise
+            - EventExecutor
+            - EventExecutorGroup
             - Future
+            - MultithreadEventExecutorGroup
             - Promise
+            - SingleThreadEventExecutor
+            - ThreadPerTaskExecutor
         - ReferenceCounted
 
 ### io.netty.handler  

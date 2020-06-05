@@ -22,6 +22,7 @@ import java.util.concurrent.ThreadFactory;
  * Default implementation of {@link MultithreadEventExecutorGroup} which will use {@link DefaultEventExecutor} instances
  * to handle the tasks.
  */
+//默认EventExecutorGroup的实现
 public class DefaultEventExecutorGroup extends MultithreadEventExecutorGroup {
     /**
      * @see #DefaultEventExecutorGroup(int, ThreadFactory)
@@ -54,6 +55,7 @@ public class DefaultEventExecutorGroup extends MultithreadEventExecutorGroup {
         super(nThreads, threadFactory, maxPendingTasks, rejectedHandler);
     }
 
+    //创建子EventExecutor
     @Override
     protected EventExecutor newChild(Executor executor, Object... args) throws Exception {
         return new DefaultEventExecutor(this, executor, (Integer) args[0], (RejectedExecutionHandler) args[1]);

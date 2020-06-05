@@ -30,6 +30,10 @@ import java.util.concurrent.TimeUnit;
 /**
  * Abstract base class for {@link EventExecutor} implementations.
  */
+
+/**
+ * 抽象的EventExecutor，继承j.u.c.AbstractExecutorService的抽象线程池实现 提供了基本线程池的行为
+ */
 public abstract class AbstractEventExecutor extends AbstractExecutorService implements EventExecutor {
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(AbstractEventExecutor.class);
 
@@ -52,11 +56,13 @@ public abstract class AbstractEventExecutor extends AbstractExecutorService impl
         return parent;
     }
 
+    //返回自己的引用
     @Override
     public EventExecutor next() {
         return this;
     }
 
+    //当前线程是否在EventLoop中
     @Override
     public boolean inEventLoop() {
         return inEventLoop(Thread.currentThread());
@@ -89,26 +95,31 @@ public abstract class AbstractEventExecutor extends AbstractExecutorService impl
         return Collections.emptyList();
     }
 
+    //创建一个DefaultPromise
     @Override
     public <V> Promise<V> newPromise() {
         return new DefaultPromise<V>(this);
     }
 
+    //创建一个ProgressivePromise
     @Override
     public <V> ProgressivePromise<V> newProgressivePromise() {
         return new DefaultProgressivePromise<V>(this);
     }
 
+    //创建一个默认是成功的Future
     @Override
     public <V> Future<V> newSucceededFuture(V result) {
         return new SucceededFuture<V>(this, result);
     }
 
+    //创建一个默认是失败的Future
     @Override
     public <V> Future<V> newFailedFuture(Throwable cause) {
         return new FailedFuture<V>(this, cause);
     }
 
+    /*****************线程池基本行为，由AbstractExecutorService实现**************************/
     @Override
     public Future<?> submit(Runnable task) {
         return (Future<?>) super.submit(task);

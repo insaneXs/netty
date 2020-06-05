@@ -30,6 +30,8 @@ import static io.netty.util.concurrent.AbstractEventExecutor.*;
  * Abstract base class for {@link EventExecutorGroup} implementations.
  */
 public abstract class AbstractEventExecutorGroup implements EventExecutorGroup {
+
+    //提交任务，最终由内部EventExecutor提交
     @Override
     public Future<?> submit(Runnable task) {
         return next().submit(task);
@@ -45,6 +47,7 @@ public abstract class AbstractEventExecutorGroup implements EventExecutorGroup {
         return next().submit(task);
     }
 
+    //提交定时任务，同样由内部的EventExecutor提交
     @Override
     public ScheduledFuture<?> schedule(Runnable command, long delay, TimeUnit unit) {
         return next().schedule(command, delay, unit);
@@ -55,16 +58,18 @@ public abstract class AbstractEventExecutorGroup implements EventExecutorGroup {
         return next().schedule(callable, delay, unit);
     }
 
+    //以特定的频率执行任务，由内部的EventExecutor执行
     @Override
     public ScheduledFuture<?> scheduleAtFixedRate(Runnable command, long initialDelay, long period, TimeUnit unit) {
         return next().scheduleAtFixedRate(command, initialDelay, period, unit);
     }
-
+    //以特定的延迟执行任务，由内部的EventExecutor执行
     @Override
     public ScheduledFuture<?> scheduleWithFixedDelay(Runnable command, long initialDelay, long delay, TimeUnit unit) {
         return next().scheduleWithFixedDelay(command, initialDelay, delay, unit);
     }
 
+    //优雅关闭线程池
     @Override
     public Future<?> shutdownGracefully() {
         return shutdownGracefully(DEFAULT_SHUTDOWN_QUIET_PERIOD, DEFAULT_SHUTDOWN_TIMEOUT, TimeUnit.SECONDS);
@@ -87,6 +92,7 @@ public abstract class AbstractEventExecutorGroup implements EventExecutorGroup {
         return Collections.emptyList();
     }
 
+    //执行提交的任务，所有任务都完成时返回
     @Override
     public <T> List<java.util.concurrent.Future<T>> invokeAll(Collection<? extends Callable<T>> tasks)
             throws InterruptedException {
@@ -99,6 +105,7 @@ public abstract class AbstractEventExecutorGroup implements EventExecutorGroup {
         return next().invokeAll(tasks, timeout, unit);
     }
 
+    //执行提交的任务，当一个任务完成时即返回
     @Override
     public <T> T invokeAny(Collection<? extends Callable<T>> tasks) throws InterruptedException, ExecutionException {
         return next().invokeAny(tasks);
@@ -110,6 +117,7 @@ public abstract class AbstractEventExecutorGroup implements EventExecutorGroup {
         return next().invokeAny(tasks, timeout, unit);
     }
 
+    //执行任务
     @Override
     public void execute(Runnable command) {
         next().execute(command);

@@ -27,12 +27,17 @@ import java.util.concurrent.TimeUnit;
  * life-cycle and allows shutting them down in a global fashion.
  *
  */
+
+/**
+ * 事件执行器组(线程池)，通过next()方法获取下个执行器
+ */
 public interface EventExecutorGroup extends ScheduledExecutorService, Iterable<EventExecutor> {
 
     /**
      * Returns {@code true} if and only if all {@link EventExecutor}s managed by this {@link EventExecutorGroup}
      * are being {@linkplain #shutdownGracefully() shut down gracefully} or was {@linkplain #isShutdown() shut down}.
      */
+    //是否关闭
     boolean isShuttingDown();
 
     /**
@@ -40,6 +45,7 @@ public interface EventExecutorGroup extends ScheduledExecutorService, Iterable<E
      *
      * @return the {@link #terminationFuture()}
      */
+    //优雅的关闭
     Future<?> shutdownGracefully();
 
     /**
@@ -56,12 +62,14 @@ public interface EventExecutorGroup extends ScheduledExecutorService, Iterable<E
      *
      * @return the {@link #terminationFuture()}
      */
+    //带超时时间的关闭
     Future<?> shutdownGracefully(long quietPeriod, long timeout, TimeUnit unit);
 
     /**
      * Returns the {@link Future} which is notified when all {@link EventExecutor}s managed by this
      * {@link EventExecutorGroup} have been terminated.
      */
+    //返回一个当EventExecutorGroup终止时会被唤醒的Future
     Future<?> terminationFuture();
 
     /**
@@ -69,6 +77,7 @@ public interface EventExecutorGroup extends ScheduledExecutorService, Iterable<E
      */
     @Override
     @Deprecated
+    //关闭
     void shutdown();
 
     /**
@@ -81,11 +90,13 @@ public interface EventExecutorGroup extends ScheduledExecutorService, Iterable<E
     /**
      * Returns one of the {@link EventExecutor}s managed by this {@link EventExecutorGroup}.
      */
+    //返回下一个EventExecutor
     EventExecutor next();
 
     @Override
     Iterator<EventExecutor> iterator();
 
+    /*****************override 线程池的接口，将返回值改成netty的future*************************************/
     @Override
     Future<?> submit(Runnable task);
 

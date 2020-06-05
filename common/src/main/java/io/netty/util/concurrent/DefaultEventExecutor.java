@@ -22,6 +22,10 @@ import java.util.concurrent.ThreadFactory;
  * Default {@link SingleThreadEventExecutor} implementation which just execute all submitted task in a
  * serial fashion.
  */
+
+/**
+ * 默认EventExecutor，内部只有一个线程串行执行任务
+ */
 public final class DefaultEventExecutor extends SingleThreadEventExecutor {
 
     public DefaultEventExecutor() {
@@ -58,8 +62,10 @@ public final class DefaultEventExecutor extends SingleThreadEventExecutor {
         super(parent, executor, true, maxPendingTasks, rejectedExecutionHandler);
     }
 
+    //核心业务逻辑
     @Override
     protected void run() {
+        //循环：取任务—>执行任务->更新时间
         for (;;) {
             Runnable task = takeTask();
             if (task != null) {
@@ -67,6 +73,7 @@ public final class DefaultEventExecutor extends SingleThreadEventExecutor {
                 updateLastExecutionTime();
             }
 
+            //如果被外部关闭，则退出循环
             if (confirmShutdown()) {
                 break;
             }
