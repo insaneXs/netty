@@ -33,6 +33,10 @@ import java.util.concurrent.ThreadFactory;
 /**
  * {@link MultithreadEventLoopGroup} implementations which is used for NIO {@link Selector} based {@link Channel}s.
  */
+
+/**
+ * 基于Nio 实现的 MultithreadEventLoopGroup
+ */
 public class NioEventLoopGroup extends MultithreadEventLoopGroup {
 
     /**
@@ -105,6 +109,10 @@ public class NioEventLoopGroup extends MultithreadEventLoopGroup {
      * Sets the percentage of the desired amount of time spent for I/O in the child event loops.  The default value is
      * {@code 50}, which means the event loop will try to spend the same amount of time for I/O as for non-I/O tasks.
      */
+    /**
+     * 设置I/O事件与非I/O事件的比例
+     * @param ioRatio
+     */
     public void setIoRatio(int ioRatio) {
         for (EventExecutor e: this) {
             ((NioEventLoop) e).setIoRatio(ioRatio);
@@ -121,6 +129,7 @@ public class NioEventLoopGroup extends MultithreadEventLoopGroup {
         }
     }
 
+    //创建NioEventLoop
     @Override
     protected EventLoop newChild(Executor executor, Object... args) throws Exception {
         return new NioEventLoop(this, executor, (SelectorProvider) args[0],

@@ -78,6 +78,8 @@ Netty 源码阅读计划
                     - AbstractNioByteChannel
                     - AbstractNioChannel  
                     - AbstractNioMessageChannel
+                    - NioEventLoop
+                    - NioEventLoopGroup
                 - socket
                     - nio
                         - NioSocketChannel
@@ -97,5 +99,9 @@ Netty 源码阅读计划
                 - DefaultChannelHandlerContext
                 - DefaultChannelPipeline
                 - DefaultChannelPromise
+                - EventLoop
+                - EventLoopGroup
+                - MultithreadEventLoopGroup
                 - ReflectiveChannelFactory
+                - SingleThreadEventLoop
                         

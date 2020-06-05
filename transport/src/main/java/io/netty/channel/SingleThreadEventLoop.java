@@ -30,6 +30,10 @@ import java.util.concurrent.ThreadFactory;
  * Abstract base class for {@link EventLoop}s that execute all its submitted tasks in a single thread.
  *
  */
+
+/**
+ * 单线程的事件循环处理器 主要实现了register channel的逻辑
+ */
 public abstract class SingleThreadEventLoop extends SingleThreadEventExecutor implements EventLoop {
 
     protected static final int DEFAULT_MAX_PENDING_TASKS = Math.max(16,
@@ -69,11 +73,13 @@ public abstract class SingleThreadEventLoop extends SingleThreadEventExecutor im
         return (EventLoop) super.next();
     }
 
+    //注册
     @Override
     public ChannelFuture register(Channel channel) {
         return register(new DefaultChannelPromise(channel, this));
     }
 
+    //交给Channel内部的UNSAFE实现
     @Override
     public ChannelFuture register(final ChannelPromise promise) {
         ObjectUtil.checkNotNull(promise, "promise");

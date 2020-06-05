@@ -24,7 +24,15 @@ import io.netty.util.concurrent.OrderedEventExecutor;
  * implementation details and internals.
  *
  */
+
+/**
+ * 用来处理已注册的channel的I/O operations
+ */
 public interface EventLoop extends OrderedEventExecutor, EventLoopGroup {
+    /**
+     * 返回关联的EventLoopGroup
+     * @return
+     */
     @Override
     EventLoopGroup parent();
 }
