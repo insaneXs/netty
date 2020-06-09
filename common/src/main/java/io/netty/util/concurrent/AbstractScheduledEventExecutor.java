@@ -240,6 +240,7 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
         if (inEventLoop()) {
             scheduledTaskQueue().add(task);
         } else {
+            //将添加scheduledTask的过程先包装成Task 加入taskQueue待执行。这样做的原因是因为priority是非线程安全的 因此只能由统一线程操作
             execute(new Runnable() {
                 @Override
                 public void run() {
