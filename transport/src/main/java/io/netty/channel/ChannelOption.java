@@ -71,6 +71,9 @@ public class ChannelOption<T> extends AbstractConstant<ChannelOption<T>> {
         return (ChannelOption<T>) pool.newInstance(name);
     }
 
+
+    /************Netty 相关配置*****************/
+
     public static final ChannelOption<ByteBufAllocator> ALLOCATOR = valueOf("ALLOCATOR");
     public static final ChannelOption<RecvByteBufAllocator> RCVBUF_ALLOCATOR = valueOf("RCVBUF_ALLOCATOR");
     public static final ChannelOption<MessageSizeEstimator> MESSAGE_SIZE_ESTIMATOR = valueOf("MESSAGE_SIZE_ESTIMATOR");
@@ -104,21 +107,35 @@ public class ChannelOption<T> extends AbstractConstant<ChannelOption<T>> {
      */
     public static final ChannelOption<Boolean> AUTO_CLOSE = valueOf("AUTO_CLOSE");
 
+    /***************套接字相关配置*********************/
+    //是否允许发送广播
     public static final ChannelOption<Boolean> SO_BROADCAST = valueOf("SO_BROADCAST");
+    //用来开启长连接的连接状态检测
     public static final ChannelOption<Boolean> SO_KEEPALIVE = valueOf("SO_KEEPALIVE");
+    //设置发送缓冲区
     public static final ChannelOption<Integer> SO_SNDBUF = valueOf("SO_SNDBUF");
+    //设置接受缓冲区
     public static final ChannelOption<Integer> SO_RCVBUF = valueOf("SO_RCVBUF");
+    //允许重复使用本地地址和端口
     public static final ChannelOption<Boolean> SO_REUSEADDR = valueOf("SO_REUSEADDR");
+    //发起关闭后，等待一段时间在进入资源清理工作
     public static final ChannelOption<Integer> SO_LINGER = valueOf("SO_LINGER");
+
+    //对应TCP/IP 协议listen函数中的backlog参数，用来指定连接对列的大小
     public static final ChannelOption<Integer> SO_BACKLOG = valueOf("SO_BACKLOG");
+
+    //
     public static final ChannelOption<Integer> SO_TIMEOUT = valueOf("SO_TIMEOUT");
 
+    //IP中的Type-Of-Service字段 表示IP包的优先级，服务质量等
     public static final ChannelOption<Integer> IP_TOS = valueOf("IP_TOS");
+
     public static final ChannelOption<InetAddress> IP_MULTICAST_ADDR = valueOf("IP_MULTICAST_ADDR");
     public static final ChannelOption<NetworkInterface> IP_MULTICAST_IF = valueOf("IP_MULTICAST_IF");
     public static final ChannelOption<Integer> IP_MULTICAST_TTL = valueOf("IP_MULTICAST_TTL");
     public static final ChannelOption<Boolean> IP_MULTICAST_LOOP_DISABLED = valueOf("IP_MULTICAST_LOOP_DISABLED");
 
+    //如果该选项true，表示禁用Nagle算法，允许小包的发送，不会缓冲发送的数据
     public static final ChannelOption<Boolean> TCP_NODELAY = valueOf("TCP_NODELAY");
 
     @Deprecated
