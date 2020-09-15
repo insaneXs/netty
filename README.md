@@ -36,8 +36,17 @@ Netty 源码阅读计划
 ### io.netty.buffer  
     - io.netty.buffer
         - AbstractByteBuf
+        - AbstractByteBufAllocator
         - AbstractReferenceCountedByteBuf
         - ByteBuf  
+        - ByteBufAllocator
+        - PoolArena
+        - PoolChunk
+        - PoolChunkList
+        - PooledByteBuf
+        - PooledByteBufAllocator
+        - PoolSubpage
+        - PoolThreadCache
         - UnpooledDirectByteBuf
         - UnpooledHeapByteBuf
 

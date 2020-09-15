@@ -65,23 +65,31 @@ final class PoolThreadCache {
     PoolThreadCache(PoolArena<byte[]> heapArena, PoolArena<ByteBuffer> directArena,
                     int tinyCacheSize, int smallCacheSize, int normalCacheSize,
                     int maxCachedBufferCapacity, int freeSweepAllocationThreshold) {
+
         if (maxCachedBufferCapacity < 0) {
             throw new IllegalArgumentException("maxCachedBufferCapacity: "
                     + maxCachedBufferCapacity + " (expected: >= 0)");
         }
+
+        //设置相关变量
         this.freeSweepAllocationThreshold = freeSweepAllocationThreshold;
         this.heapArena = heapArena;
         this.directArena = directArena;
+        //如果需要管理Direct Memory
         if (directArena != null) {
+            //创建Tiny类型的缓存池
             tinySubPageDirectCaches = createSubPageCaches(
                     tinyCacheSize, PoolArena.numTinySubpagePools, SizeClass.Tiny);
+            //创建Small类型的缓存池
             smallSubPageDirectCaches = createSubPageCaches(
                     smallCacheSize, directArena.numSmallSubpagePools, SizeClass.Small);
 
             numShiftsNormalDirect = log2(directArena.pageSize);
+            //创建normal的缓存池
             normalDirectCaches = createNormalCaches(
                     normalCacheSize, maxCachedBufferCapacity, directArena);
 
+            //增加计数
             directArena.numThreadCaches.getAndIncrement();
         } else {
             // No directArea is configured so just null out all caches
@@ -90,6 +98,8 @@ final class PoolThreadCache {
             normalDirectCaches = null;
             numShiftsNormalDirect = -1;
         }
+
+        //如果需要管理heap memeory 方式同上
         if (heapArena != null) {
             // Create the caches for the heap allocations
             tinySubPageHeapCaches = createSubPageCaches(
@@ -119,6 +129,14 @@ final class PoolThreadCache {
         }
     }
 
+    /**
+     * 创建Subpage的缓存池
+     * @param cacheSize Cache的大小(内部队列的大小)
+     * @param numCaches Cache的个数
+     * @param sizeClass Cache的尺寸
+     * @param <T>
+     * @return
+     */
     private static <T> MemoryRegionCache<T>[] createSubPageCaches(
             int cacheSize, int numCaches, SizeClass sizeClass) {
         if (cacheSize > 0 && numCaches > 0) {
@@ -134,10 +152,19 @@ final class PoolThreadCache {
         }
     }
 
+    /**
+     * 创建Page的缓存池
+     * @param cacheSize Cache的大小(内部队列的大小)
+     * @param maxCachedBufferCapacity 最大能缓存的容量
+     * @param area 负责管理的Arena 仅用来获取pageSize和ChunkSize
+     * @param <T>
+     * @return
+     */
     private static <T> MemoryRegionCache<T>[] createNormalCaches(
             int cacheSize, int maxCachedBufferCapacity, PoolArena<T> area) {
         if (cacheSize > 0 && maxCachedBufferCapacity > 0) {
             int max = Math.min(area.chunkSize, maxCachedBufferCapacity);
+            //确定池的大小 因为缓存都是只能是pageSize * 2的幂 的规格
             int arraySize = Math.max(1, log2(max / area.pageSize) + 1);
 
             @SuppressWarnings("unchecked")
@@ -160,6 +187,7 @@ final class PoolThreadCache {
         return res;
     }
 
+    //通过缓存分配内存
     /**
      * Try to allocate a tiny buffer out of the cache. Returns {@code true} if successful {@code false} otherwise
      */
@@ -182,12 +210,15 @@ final class PoolThreadCache {
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
+    //分配内存
     private boolean allocate(MemoryRegionCache<?> cache, PooledByteBuf buf, int reqCapacity) {
         if (cache == null) {
             // no cache found so just return false here
             return false;
         }
+        //从Cache分配内存
         boolean allocated = cache.allocate(buf, reqCapacity);
+        //如果分配次数到达调整的阈值 压缩Cache
         if (++ allocations >= freeSweepAllocationThreshold) {
             allocations = 0;
             trim();
@@ -198,6 +229,15 @@ final class PoolThreadCache {
     /**
      * Add {@link PoolChunk} and {@code handle} to the cache if there is enough room.
      * Returns {@code true} if it fit into the cache {@code false} otherwise.
+     */
+    /**
+     * 将不使用的内存添加到缓存池
+     * @param area 负责管理的PoolArena
+     * @param chunk 所处的Chunk
+     * @param handle 索引
+     * @param normCapacity 容量
+     * @param sizeClass 规格
+     * @return
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     boolean add(PoolArena<?> area, PoolChunk chunk, long handle, int normCapacity, SizeClass sizeClass) {
@@ -234,6 +274,7 @@ final class PoolThreadCache {
     /**
      *  Should be called if the Thread that uses this cache is about to exist to release resources out of the cache
      */
+    //释放缓存中的内存
     void free() {
         // As free() may be called either by the finalizer or by FastThreadLocal.onRemoval(...) we need to ensure
         // we only call this one time.
@@ -304,7 +345,9 @@ final class PoolThreadCache {
         cache.trim();
     }
 
+    //从Tiny缓存池中找适合的规格的Cache
     private MemoryRegionCache<?> cacheForTiny(PoolArena<?> area, int normCapacity) {
+        //确定这个大小在缓存中的第几个位置
         int idx = PoolArena.tinyIdx(normCapacity);
         if (area.isDirect()) {
             return cache(tinySubPageDirectCaches, idx);
@@ -312,6 +355,7 @@ final class PoolThreadCache {
         return cache(tinySubPageHeapCaches, idx);
     }
 
+    //从Small缓存池中找适合的规格的Cache
     private MemoryRegionCache<?> cacheForSmall(PoolArena<?> area, int normCapacity) {
         int idx = PoolArena.smallIdx(normCapacity);
         if (area.isDirect()) {
@@ -320,6 +364,7 @@ final class PoolThreadCache {
         return cache(smallSubPageHeapCaches, idx);
     }
 
+    //从Normal缓存池中找适合规格的Cache
     private MemoryRegionCache<?> cacheForNormal(PoolArena<?> area, int normCapacity) {
         if (area.isDirect()) {
             int idx = log2(normCapacity >> numShiftsNormalDirect);
@@ -367,14 +412,22 @@ final class PoolThreadCache {
     }
 
     private abstract static class MemoryRegionCache<T> {
+        //队列大小
         private final int size;
+        //队列 元素可以理解为内存块
         private final Queue<Entry<T>> queue;
+        //Region的大小 TINY SMALL NORMAL
         private final SizeClass sizeClass;
+        //分配的次数
         private int allocations;
 
+        //创建MemoryRegionCache
         MemoryRegionCache(int size, SizeClass sizeClass) {
+            //确定size(2的幂次)
             this.size = MathUtil.safeFindNextPositivePowerOfTwo(size);
+            //创建multi-producer single-consumer的队列
             queue = PlatformDependent.newFixedMpscQueue(this.size);
+            //设置尺寸
             this.sizeClass = sizeClass;
         }
 
@@ -387,10 +440,19 @@ final class PoolThreadCache {
         /**
          * Add to cache if not already full.
          */
+        /**
+         * 回收内存
+         * @param chunk
+         * @param handle
+         * @return
+         */
         @SuppressWarnings("unchecked")
         public final boolean add(PoolChunk<T> chunk, long handle) {
+            //创建Entry 代表要回收的内存
             Entry<T> entry = newEntry(chunk, handle);
+            //尝试将内存入队
             boolean queued = queue.offer(entry);
+            //如果无法入队 回收
             if (!queued) {
                 // If it was not possible to cache the chunk, immediately recycle the entry
                 entry.recycle();
@@ -402,11 +464,14 @@ final class PoolThreadCache {
         /**
          * Allocate something out of the cache if possible and remove the entry from the cache.
          */
+        //分配内存
         public final boolean allocate(PooledByteBuf<T> buf, int reqCapacity) {
+            //取出内存块
             Entry<T> entry = queue.poll();
             if (entry == null) {
                 return false;
             }
+            //将内存快分配给ByteBuf
             initBuf(entry.chunk, entry.handle, buf, reqCapacity);
             entry.recycle();
 
@@ -422,11 +487,14 @@ final class PoolThreadCache {
             return free(Integer.MAX_VALUE);
         }
 
+        //释放这个RegionCache
         private int free(int max) {
             int numFreed = 0;
             for (; numFreed < max; numFreed++) {
+                //从队列中取出内存块
                 Entry<T> entry = queue.poll();
                 if (entry != null) {
+                    //释放内存块
                     freeEntry(entry);
                 } else {
                     // all cleared
@@ -460,6 +528,7 @@ final class PoolThreadCache {
             chunk.arena.freeChunk(chunk, handle, sizeClass);
         }
 
+        //可以理解为内存块
         static final class Entry<T> {
             final Handle<Entry<?>> recyclerHandle;
             PoolChunk<T> chunk;
@@ -469,13 +538,21 @@ final class PoolThreadCache {
                 this.recyclerHandle = recyclerHandle;
             }
 
+            //回收内存块
             void recycle() {
+                //释放掉Chunk的引用
                 chunk = null;
                 handle = -1;
                 recyclerHandle.recycle(this);
             }
         }
 
+        /**
+         * 创建一个元素表示内存块
+         * @param chunk
+         * @param handle
+         * @return
+         */
         @SuppressWarnings("rawtypes")
         private static Entry newEntry(PoolChunk<?> chunk, long handle) {
             Entry entry = RECYCLER.get();

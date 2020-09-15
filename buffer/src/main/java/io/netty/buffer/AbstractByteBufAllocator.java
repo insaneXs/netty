@@ -166,6 +166,7 @@ public abstract class AbstractByteBufAllocator implements ByteBufAllocator {
         return newHeapBuffer(initialCapacity, maxCapacity);
     }
 
+    /***************分配 DirectBuffer******************/
     @Override
     public ByteBuf directBuffer() {
         return directBuffer(DEFAULT_INITIAL_CAPACITY, DEFAULT_MAX_CAPACITY);
@@ -178,6 +179,7 @@ public abstract class AbstractByteBufAllocator implements ByteBufAllocator {
 
     @Override
     public ByteBuf directBuffer(int initialCapacity, int maxCapacity) {
+        //如果初始容量和最大容量都为0 则分配一个空的ByteBuf
         if (initialCapacity == 0 && maxCapacity == 0) {
             return emptyBuf;
         }
@@ -185,6 +187,7 @@ public abstract class AbstractByteBufAllocator implements ByteBufAllocator {
         return newDirectBuffer(initialCapacity, maxCapacity);
     }
 
+    /******************分配复合ByteBuf  复合ByteBuf由多个ByteBuf组合而成***********************/
     @Override
     public CompositeByteBuf compositeBuffer() {
         if (directByDefault) {
@@ -247,6 +250,13 @@ public abstract class AbstractByteBufAllocator implements ByteBufAllocator {
         return StringUtil.simpleClassName(this) + "(directByDefault: " + directByDefault + ')';
     }
 
+
+    /**
+     * ByteBuf 扩容
+     * @param minNewCapacity
+     * @param maxCapacity
+     * @return
+     */
     @Override
     public int calculateNewCapacity(int minNewCapacity, int maxCapacity) {
         if (minNewCapacity < 0) {
@@ -264,6 +274,7 @@ public abstract class AbstractByteBufAllocator implements ByteBufAllocator {
         }
 
         // If over threshold, do not double but just increase by threshold.
+        //如果扩容是超过阈值 不在成倍增加 而是+threshold
         if (minNewCapacity > threshold) {
             int newCapacity = minNewCapacity / threshold * threshold;
             if (newCapacity > maxCapacity - threshold) {
@@ -275,6 +286,7 @@ public abstract class AbstractByteBufAllocator implements ByteBufAllocator {
         }
 
         // Not over threshold. Double up to 4 MiB, starting from 64.
+        //从64开始成倍扩容
         int newCapacity = 64;
         while (newCapacity < minNewCapacity) {
             newCapacity <<= 1;

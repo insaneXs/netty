@@ -42,6 +42,15 @@ abstract class PooledByteBuf<T> extends AbstractReferenceCountedByteBuf {
         this.recyclerHandle = (Handle<PooledByteBuf<T>>) recyclerHandle;
     }
 
+    /**
+     * 初始化ByteBuf 让ByteBuf拥有内存
+     * @param chunk 关联的PageChunk
+     * @param handle 句柄 可以理解为索引 idx
+     * @param offset 偏移量
+     * @param length 要求的大小
+     * @param maxLength 最大大小
+     * @param cache 关联的缓存 清空后由Cache回收 而不直接释放
+     */
     void init(PoolChunk<T> chunk, long handle, int offset, int length, int maxLength, PoolThreadCache cache) {
         init0(chunk, handle, offset, length, maxLength, cache);
     }

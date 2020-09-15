@@ -25,6 +25,13 @@ import java.util.List;
 
 import static java.lang.Math.*;
 
+/**
+ * PoolChunkList 目的是为了对PoolChunk进行管理
+ * 让剩余空间大的(Usage低的)PoolChunk往前排
+ * 而剩余空间小的的(Usage高的)PoolChunk往后排
+ * 上下浮动能够加快内存的申请的效率
+ * @param <T>
+ */
 final class PoolChunkList<T> implements PoolChunkListMetric {
     private static final Iterator<PoolChunkMetric> EMPTY_METRICS = Collections.<PoolChunkMetric>emptyList().iterator();
     private final PoolArena<T> arena;
@@ -40,6 +47,14 @@ final class PoolChunkList<T> implements PoolChunkListMetric {
     // TODO: Test if adding padding helps under contention
     //private long pad0, pad1, pad2, pad3, pad4, pad5, pad6, pad7;
 
+    /**
+     * PoolChunkList构造函数
+     * @param arena PoolArean
+     * @param nextList 下一个PoolChunkList 可见PoolChunkList自身也形成链表
+     * @param minUsage 最小使用率
+     * @param maxUsage 最大使用率
+     * @param chunkSize PoolChunk的大小
+     */
     PoolChunkList(PoolArena<T> arena, PoolChunkList<T> nextList, int minUsage, int maxUsage, int chunkSize) {
         assert minUsage <= maxUsage;
         this.arena = arena;
@@ -74,6 +89,7 @@ final class PoolChunkList<T> implements PoolChunkListMetric {
         this.prevList = prevList;
     }
 
+    //分配内存
     boolean allocate(PooledByteBuf<T> buf, int reqCapacity, int normCapacity) {
         if (head == null || normCapacity > maxCapacity) {
             // Either this PoolChunkList is empty or the requested capacity is larger then the capacity which can
@@ -81,16 +97,23 @@ final class PoolChunkList<T> implements PoolChunkListMetric {
             return false;
         }
 
+        //遍历内部的PoolChunk
         for (PoolChunk<T> cur = head;;) {
+            //尝试向当前的PoolChunk的申请
             long handle = cur.allocate(normCapacity);
-            if (handle < 0) {
+
+            if (handle < 0) {//申请失败 向下遍历
                 cur = cur.next;
+                //如果已经到链表尾端 返回false
                 if (cur == null) {
                     return false;
                 }
             } else {
+                //
                 cur.initBuf(buf, handle, reqCapacity);
+                //如果分配后 PoolChunk 大于 使用率
                 if (cur.usage() >= maxUsage) {
+                    //将该PoolChunk往下一个PoolChunkList移动
                     remove(cur);
                     nextList.add(cur);
                 }
@@ -99,11 +122,15 @@ final class PoolChunkList<T> implements PoolChunkListMetric {
         }
     }
 
+    //释放
     boolean free(PoolChunk<T> chunk, long handle) {
+        //释放PoolChunk相关的Page
         chunk.free(handle);
+        //如果释放后 最小使用率
         if (chunk.usage() < minUsage) {
             remove(chunk);
             // Move the PoolChunk down the PoolChunkList linked-list.
+            //移动到前一个PoolChunkList中
             return move0(chunk);
         }
         return true;
@@ -136,6 +163,7 @@ final class PoolChunkList<T> implements PoolChunkListMetric {
         return prevList.move(chunk);
     }
 
+    //将PoolChunk添加到PoolChunkList
     void add(PoolChunk<T> chunk) {
         if (chunk.usage() >= maxUsage) {
             nextList.add(chunk);
@@ -161,6 +189,7 @@ final class PoolChunkList<T> implements PoolChunkListMetric {
         }
     }
 
+    //从PoolChunkList移除PoolChunk
     private void remove(PoolChunk<T> cur) {
         if (cur == head) {
             head = cur.next;
