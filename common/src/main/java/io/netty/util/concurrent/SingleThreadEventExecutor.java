@@ -858,6 +858,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         return isTerminated();
     }
 
+    //提交任务
     @Override
     public void execute(Runnable task) {
         if (task == null) {
@@ -867,8 +868,10 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         boolean inEventLoop = inEventLoop();
         addTask(task);
 
+        //外部线程
         if (!inEventLoop) {
 
+            //判断如果线程池状态未started，则开启线程
             startThread();
             if (isShutdown() && removeTask(task)) {
                 reject();

@@ -487,6 +487,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                         // (OK - no wake-up required).
 
                         //出于性能考虑 先通过一个标志位判断是否需要Selector.wakeup()
+                        //FIXME ??? 有什么线程还会被Selector阻塞
                         if (wakenUp.get()) {
                             selector.wakeup();
                         }
@@ -494,7 +495,8 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                     default:
                 }
 
-                //STEP 2 进入到这说明Selector中有就绪的事件
+                //STEP 2 进入到说明线程已经从STEP 1的select()中返回，此时可能有事件就绪或是任务待处理
+                //任务处理过程分为处理IO任务 和 非IO任务 两类，分别对应processeSelectedKeys() 和 runAllTasks()
                 cancelledKeys = 0;
                 needsToSelectAgain = false;
                 final int ioRatio = this.ioRatio;
@@ -519,6 +521,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
             } catch (Throwable t) {
                 handleLoopException(t);
             }
+            //是否有人触发了关闭
             // Always handle shutdown even if the loop processing threw an exception.
             try {
                 if (isShuttingDown()) {
@@ -530,6 +533,8 @@ public final class NioEventLoop extends SingleThreadEventLoop {
             } catch (Throwable t) {
                 handleLoopException(t);
             }
+
+            //处理完成，开始新一轮的循环
         }
     }
 
@@ -778,6 +783,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
     //唤醒阻塞的select()方法
     @Override
     protected void wakeup(boolean inEventLoop) {
+        //如果是外部线程，且没被唤醒过 唤醒阻塞的Selector
         if (!inEventLoop && wakenUp.compareAndSet(false, true)) {
             selector.wakeup();
         }
@@ -834,15 +840,17 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                 //带超时的选择
                 /**
                  * 有四种情况会从阻塞的select()返回
-                 * 1.SelectionKey就绪
+                 * 1.SelectionKey就绪 => selectedKeys != 0
                  * 2.超时时间到
                  * 3.线程被中断thread.interrupt()
                  * 4.Selector.wakeup()
                  */
                 int selectedKeys = selector.select(timeoutMillis);
 
+
                 selectCnt ++;
 
+                //如果是因为选中事件 或是 外部提交了任务
                 if (selectedKeys != 0 || oldWakenUp || wakenUp.get() || hasTasks() || hasScheduledTasks()) {
                     // - Selected something,
                     // - waken up by user, or
@@ -869,9 +877,9 @@ public final class NioEventLoop extends SingleThreadEventLoop {
 
                 long time = System.nanoTime();
 
-                if (time - TimeUnit.MILLISECONDS.toNanos(timeoutMillis) >= currentTimeNanos) { //超时未选中
+                if (time - TimeUnit.MILLISECONDS.toNanos(timeoutMillis) >= currentTimeNanos) { //发生超时，说明此次不是空轮转
                     // timeoutMillis elapsed without anything selected.
-                    selectCnt = 1;
+                    selectCnt = 1; //重置计数
                 } else if (SELECTOR_AUTO_REBUILD_THRESHOLD > 0 &&
                         selectCnt >= SELECTOR_AUTO_REBUILD_THRESHOLD) { //避免Selector空转
                     // The selector returned prematurely many times in a row.
