@@ -69,6 +69,7 @@ Netty 源码阅读计划
             - Promise
             - SingleThreadEventExecutor
             - ThreadPerTaskExecutor
+        - Recycler    
         - ReferenceCounted
 
 ### io.netty.handler  
